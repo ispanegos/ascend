@@ -1,0 +1,3 @@
+-- Seed data for local development.
+-- The initial athlete configuration (spec §58) is seeded with Milestone 2,
+-- once the profile/equipment/availability schema exists.
