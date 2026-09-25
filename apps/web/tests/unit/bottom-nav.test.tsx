@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BottomNav } from "@/components/shell/BottomNav";
-import { NAV_ITEMS, isActiveHref } from "@/components/shell/nav-items";
+import { NAV_ITEMS, isActiveHref, isActiveItem } from "@/components/shell/nav-items";
 
 const pathname = vi.hoisted(() => ({ current: "/today" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
@@ -42,5 +42,13 @@ describe("isActiveHref", () => {
     expect(isActiveHref("/bosses", "/bosses")).toBe(true);
     expect(isActiveHref("/bosses/the-marathon", "/bosses")).toBe(true);
     expect(isActiveHref("/bossesx", "/bosses")).toBe(false);
+  });
+});
+
+describe("isActiveItem", () => {
+  it("keeps Boss encounters inside Ascend", () => {
+    const ascend = NAV_ITEMS.find((item) => item.label === "Ascend")!;
+    expect(isActiveItem("/bosses", ascend)).toBe(true);
+    expect(NAV_ITEMS.some((item) => item.label === "Bosses")).toBe(false);
   });
 });

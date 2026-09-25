@@ -365,11 +365,10 @@ test.describe("Spawn journey", () => {
       }
       await page.goto("/ascend");
       await shot(page, "12b-ascend-full", { fullPage: true });
-      await page.goto("/design/boss");
-      await shot(page, "14-boss-component");
-      await shot(page, "14b-boss-component-full", { fullPage: true });
-      await page.goto("/design/workout");
-      await shot(page, "15-active-workout");
+      await page.goto("/design/sample/boss");
+      await shot(page, "14-boss-sample");
+      await page.goto("/design/sample/workout");
+      await shot(page, "15-active-workout-sample");
       await page.goto("/design");
       await shot(page, "17-design-gallery-full", { fullPage: true });
       await page.goto("/");

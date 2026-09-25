@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "icons": "node scripts/generate-icons.mjs",
-    "art": "node scripts/generate-art.mjs"
+    "art": "node scripts/generate-art.mjs",
+    "pixel-icons": "node scripts/generate-pixel-icons.mjs"
   },
   "dependencies": {
     "@ascend/shared": "^0.1.0",

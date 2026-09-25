@@ -1,0 +1,215 @@
+/* Boss (V2 §19, pass 2): 90–100 % fantasy, UI inside the scene. */
+
+.screen {
+  margin-inline: calc(var(--mobile-gutter) * -1);
+  margin-top: calc((env(safe-area-inset-top) + var(--space-4)) * -1);
+  background: linear-gradient(180deg, var(--boss-bg) 40%, var(--bg-app));
+  color: var(--boss-text);
+}
+
+@media (min-width: 561px) {
+  .screen {
+    margin-inline: 0;
+    margin-top: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+}
+
+.art {
+  max-height: 460px;
+}
+
+/* The art melts into the panel below. */
+.art::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 55%;
+  background: linear-gradient(180deg, transparent, rgba(33, 17, 22, 0.85) 60%, var(--boss-bg));
+  pointer-events: none;
+}
+
+.topBar {
+  position: absolute;
+  z-index: 1;
+  top: calc(env(safe-area-inset-top) + var(--space-3));
+  left: var(--mobile-gutter);
+  right: var(--mobile-gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--boss-accent-bright);
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-label-size);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.titleBlock {
+  position: absolute;
+  z-index: 1;
+  inset: auto var(--mobile-gutter) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.name {
+  font-size: clamp(1.75rem, 8.5vw, 2.25rem);
+  line-height: 1.05;
+  color: var(--boss-name);
+  text-shadow: 0 0 18px rgba(201, 65, 54, 0.6), 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.meaning {
+  color: var(--boss-text-muted);
+  font-size: var(--text-small-size);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0 var(--mobile-gutter) var(--space-4);
+}
+
+.label {
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-label-size);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--boss-text-muted);
+}
+
+.readiness {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.readinessTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.readinessValue {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.track {
+  height: 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.track > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--boss-accent), var(--boss-accent-bright), var(--accent-primary));
+  box-shadow: 0 0 12px rgba(240, 120, 69, 0.6);
+}
+
+.note {
+  color: var(--boss-text-muted);
+  font-size: var(--text-meta-size);
+}
+
+.reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.req {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.req > svg:last-child {
+  color: var(--boss-text-muted);
+}
+
+.met > svg:last-child {
+  color: var(--status-verified);
+}
+
+.reqName {
+  min-width: 0;
+}
+
+.reqOf {
+  color: var(--boss-text-muted);
+}
+
+/* The primary action stays in reach above the navigation, over the scene. */
+.action {
+  position: sticky;
+  z-index: 5;
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-3));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.action > :global(button),
+.action > :global(a) {
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.8), var(--glow-boss);
+}
+
+/* State through light. */
+.undiscovered .art img {
+  filter: grayscale(0.85) brightness(0.4);
+}
+
+.not-defeated .art img,
+.recoil .art img {
+  filter: saturate(0.6) brightness(0.7);
+}
+
+.revenge .art img {
+  filter: saturate(1.25) brightness(1.05);
+}
+
+.defeated .art img {
+  filter: grayscale(0.6) brightness(0.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ready .art img,
+  .revenge .art img,
+  .available .art img {
+    animation: breathe 5s ease-in-out infinite;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    filter: saturate(1.2) brightness(1.08);
+  }
+}

@@ -1,0 +1,51 @@
+/* Review page: wide by design (it is a desk tool, not a phone screen). */
+
+.page {
+  min-height: 100dvh;
+  padding: var(--space-8) var(--space-6);
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+}
+
+.row {
+  display: flex;
+  gap: var(--space-8);
+  overflow-x: auto;
+  padding-bottom: var(--space-6);
+}
+
+.figure {
+  flex: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-family: var(--font-product-condensed);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.phone {
+  width: 406px;
+  padding: 8px;
+  border-radius: 40px;
+  background: linear-gradient(180deg, rgba(60, 80, 90, 0.9), rgba(20, 30, 36, 0.95));
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.phone iframe {
+  display: block;
+  width: 390px;
+  height: 844px;
+  border: 0;
+  border-radius: 32px;
+  background: var(--bg-app);
+}

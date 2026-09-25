@@ -1,4 +1,4 @@
-import { ATTRIBUTE_KEYS, ATTRIBUTE_LABELS } from "@ascend/shared";
+import { ATTRIBUTE_KEYS, ATTRIBUTE_LABELS, type AttributeKey, type StatStatus } from "@ascend/shared";
 import Link from "next/link";
 import { AttributeIcon } from "@/components/ui/AttributeIcon";
 import { ConfidenceBar } from "@/components/ui/ConfidenceBar";
@@ -6,16 +6,27 @@ import { Icon } from "@/components/ui/Icon";
 import { PixelIcon } from "@/components/ui/PixelIcon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cx } from "@/lib/cx";
-import type { AthleteStats } from "./data";
 import { displayPercent, displayStat } from "./trace";
 import styles from "./stats.module.css";
+
+interface StatLine {
+  current: number | null;
+  confidence: number;
+  status: StatStatus;
+}
+
+/** What the list needs; `AthleteStats` from the database satisfies it. */
+export interface StatListData {
+  overall: StatLine;
+  stats: Record<AttributeKey, StatLine>;
+}
 
 /**
  * Overall + the seven attributes (V2 §18). A performance screen: measured
  * values in cyan, status in words and runes, no scenery behind numbers.
  * Integers only — stored values keep their decimals (spec §3).
  */
-export function StatList({ stats, headingLevel = 2 }: { stats: AthleteStats; headingLevel?: 1 | 2 }) {
+export function StatList({ stats, headingLevel = 2 }: { stats: StatListData; headingLevel?: 1 | 2 }) {
   const { overall } = stats;
   const Heading = headingLevel === 1 ? "h1" : "h2";
   const overallValue = overall.current === null ? 0 : Math.min(100, Math.max(0, overall.current));

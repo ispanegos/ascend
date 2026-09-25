@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/shell/BrandMark";
 import { QuestCard } from "@/components/game/QuestCard";
+import { SAMPLE_QUESTS } from "@/features/screens/samples";
 import { AttributeIcon } from "@/components/ui/AttributeIcon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -31,13 +32,13 @@ const STATUSES: DisplayStatus[] = [
 /** Sample content for visual review only. Not real Quests. */
 export default function DesignGalleryPage() {
   return (
-    <>
+    <main id="main" className="app-page app-page--focused stack stack--lg" style={{ paddingBlock: "var(--space-4) var(--space-10)" }}>
       <header className="stack stack--sm">
-        <BrandMark size="lg" tagline />
+        <BrandMark size="lg" />
         <h1 className="text-h1">Design System V2</h1>
         <p className="text-muted">
-          Component states for review. Sample content only. <Link href="/design/boss">Boss</Link> ·{" "}
-          <Link href="/design/workout">Active workout</Link>
+          Component states for review. Sample content only. <Link href="/design/review">Screen review</Link> ·{" "}
+          <Link href="/design/sample/boss">Boss</Link> · <Link href="/design/sample/workout">Active workout</Link>
         </p>
       </header>
 
@@ -83,13 +84,12 @@ export default function DesignGalleryPage() {
 
       <section className="stack">
         <SectionHeader title="Quest card states" aside="sample" />
-        <QuestCard title="Strength foundation" description="Goblet squat, row and carry." duration="45 min" evidenceFor={["strength", "core"]} status="active" art="quests.training-grounds" href="/design" />
-        <QuestCard title="Aerobic base" description="Easy continuous run or walk." duration="30 min" evidenceFor={["endurance"]} status="available" art="quests.campfire" href="/design" />
-        <QuestCard title="Mobility flow" description="Ankle, hip and shoulder range." duration="15 min" evidenceFor={["mobility"]} status="completed" art="quests.shrine" />
-        <QuestCard title="Reassessment" description="Repeat the Frame tests." duration="40 min" evidenceFor={["strength"]} status="scheduled" />
-        <QuestCard title="Tempo intervals" description="Needs an Endurance Path." duration="35 min" evidenceFor={["endurance", "recovery"]} status="locked" />
-        <QuestCard title="Carry ladder" description="Stopped early — that is fine." duration="20 min" evidenceFor={["core"]} status="failed" />
+        {SAMPLE_QUESTS.map((quest) => (
+          <QuestCard key={quest.title} {...quest} />
+        ))}
+        <QuestCard title="Tempo intervals" description="Needs an Endurance Path." duration="35 min" affects={["endurance"]} evidence="Workout" status="locked" />
+        <QuestCard title="Carry ladder" description="Stopped early — that is fine." duration="20 min" affects={["core"]} evidence="Workout" status="failed" />
       </section>
-    </>
+    </main>
   );
 }
