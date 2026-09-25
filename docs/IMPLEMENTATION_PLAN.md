@@ -9,7 +9,7 @@ Status legend: `DONE` · `IN PROGRESS` · `NOT STARTED`
 
 ---
 
-## Milestone 1 — Foundation · `DONE` (local; remote deploy pending)
+## Milestone 1 — Foundation · `DONE`
 
 Spec §69 deliverables and how each is met.
 
@@ -17,7 +17,7 @@ Spec §69 deliverables and how each is met.
 |---|---|---|
 | Monorepo | npm workspaces: `apps/web`, `packages/shared`; `engine/` and `supabase/` directories per §44 | §44 |
 | Next.js app | Next.js 16 App Router, React 19, strict TypeScript (no `any`) | §43, §0.14 |
-| Supabase local/project setup | `supabase/config.toml`, migrations, local stack via Supabase CLI; remote project `ascend` (link + migration push pending) | §45, §46 |
+| Supabase local/project setup | `supabase/config.toml`, migrations, local stack via Supabase CLI; remote project `ascend` linked, migration applied | §45, §46 |
 | Auth | Supabase Auth, email + password, SSR cookie sessions via `@supabase/ssr`; route protection in `proxy.ts` | §48, §57 |
 | RLS | `profiles` table, owner-only policies scoped by `auth.uid()`, pgTAP tests | §46, §48 |
 | tokens.css | Spec §28 tokens verbatim, plus typography tokens (§29) | §28, §29 |
@@ -41,6 +41,9 @@ Spec §69 deliverables and how each is met.
 Verified on 2026-09-25: 123 unit tests, 19 pgTAP RLS tests, 139 E2E tests
 (6 skipped by design: keyboard-only checks on touch projects, service-worker
 checks on WebKit) across 320 / 390 / 430 / iPhone WebKit / 768 / 1280.
+
+Deployed to production at https://ascend-seven-orcin.vercel.app (Vercel root
+directory `apps/web`); remote Supabase migration applied.
 
 ### Explicitly out of scope for Milestone 1
 
