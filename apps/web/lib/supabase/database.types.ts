@@ -488,6 +488,89 @@ export type Database = {
           },
         ]
       }
+      calculation_evidence: {
+        Row: {
+          calculation_id: string
+          evidence_id: string
+        }
+        Insert: {
+          calculation_id: string
+          evidence_id: string
+        }
+        Update: {
+          calculation_id?: string
+          evidence_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_evidence_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "stat_calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calculation_evidence_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "performance_evidence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      engine_config: {
+        Row: {
+          created_at: string
+          engine_version: string
+          section: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          engine_version: string
+          section: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          engine_version?: string
+          section?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engine_config_engine_version_fkey"
+            columns: ["engine_version"]
+            isOneToOne: false
+            referencedRelation: "engine_versions"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      engine_versions: {
+        Row: {
+          calibration_status: string
+          config: Json
+          config_hash: string
+          registered_at: string
+          version: string
+        }
+        Insert: {
+          calibration_status: string
+          config: Json
+          config_hash: string
+          registered_at?: string
+          version: string
+        }
+        Update: {
+          calibration_status?: string
+          config?: Json
+          config_hash?: string
+          registered_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           category: string
@@ -585,6 +668,67 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "assessment_tests"
             referencedColumns: ["key"]
+          },
+        ]
+      }
+      overall_snapshots: {
+        Row: {
+          athlete_id: string
+          calculated_at: string
+          calculation_id: string
+          confidence: number
+          current: number | null
+          engine_version: string
+          id: string
+          participating: string[]
+          status: string
+          trace: Json
+        }
+        Insert: {
+          athlete_id: string
+          calculated_at?: string
+          calculation_id: string
+          confidence: number
+          current?: number | null
+          engine_version: string
+          id?: string
+          participating?: string[]
+          status: string
+          trace: Json
+        }
+        Update: {
+          athlete_id?: string
+          calculated_at?: string
+          calculation_id?: string
+          confidence?: number
+          current?: number | null
+          engine_version?: string
+          id?: string
+          participating?: string[]
+          status?: string
+          trace?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overall_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overall_snapshots_calculation_id_athlete_id_fkey"
+            columns: ["calculation_id", "athlete_id"]
+            isOneToOne: false
+            referencedRelation: "stat_calculations"
+            referencedColumns: ["id", "athlete_id"]
+          },
+          {
+            foreignKeyName: "overall_snapshots_engine_version_fkey"
+            columns: ["engine_version"]
+            isOneToOne: false
+            referencedRelation: "engine_versions"
+            referencedColumns: ["version"]
           },
         ]
       }
@@ -700,12 +844,202 @@ export type Database = {
         }
         Relationships: []
       }
+      scoring_curves: {
+        Row: {
+          body_mass_mode: string | null
+          calibration_status: string
+          created_at: string
+          curve_key: string
+          definition: Json
+          direction: string | null
+          engine_version: string
+          feature: string
+          id: string
+          kind: string
+          test_key: string
+        }
+        Insert: {
+          body_mass_mode?: string | null
+          calibration_status: string
+          created_at?: string
+          curve_key: string
+          definition: Json
+          direction?: string | null
+          engine_version: string
+          feature: string
+          id?: string
+          kind: string
+          test_key: string
+        }
+        Update: {
+          body_mass_mode?: string | null
+          calibration_status?: string
+          created_at?: string
+          curve_key?: string
+          definition?: Json
+          direction?: string | null
+          engine_version?: string
+          feature?: string
+          id?: string
+          kind?: string
+          test_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scoring_curves_engine_version_fkey"
+            columns: ["engine_version"]
+            isOneToOne: false
+            referencedRelation: "engine_versions"
+            referencedColumns: ["version"]
+          },
+          {
+            foreignKeyName: "scoring_curves_test_key_fkey"
+            columns: ["test_key"]
+            isOneToOne: false
+            referencedRelation: "assessment_tests"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      stat_calculations: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          config_hash: string
+          created_at: string
+          engine_version: string
+          gaps: Json
+          id: string
+          input_hash: string
+          reason: string
+        }
+        Insert: {
+          as_of: string
+          athlete_id: string
+          config_hash: string
+          created_at?: string
+          engine_version: string
+          gaps?: Json
+          id?: string
+          input_hash: string
+          reason: string
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          config_hash?: string
+          created_at?: string
+          engine_version?: string
+          gaps?: Json
+          id?: string
+          input_hash?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_calculations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stat_calculations_engine_version_fkey"
+            columns: ["engine_version"]
+            isOneToOne: false
+            referencedRelation: "engine_versions"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      stat_snapshots: {
+        Row: {
+          athlete_id: string
+          attribute: string
+          calculated_at: string
+          calculation_id: string
+          confidence: number
+          coverage: number
+          current: number | null
+          engine_version: string
+          evidence_ids: string[]
+          id: string
+          peak: number | null
+          peak_updated: boolean
+          status: string
+          trace: Json
+        }
+        Insert: {
+          athlete_id: string
+          attribute: string
+          calculated_at?: string
+          calculation_id: string
+          confidence: number
+          coverage: number
+          current?: number | null
+          engine_version: string
+          evidence_ids?: string[]
+          id?: string
+          peak?: number | null
+          peak_updated?: boolean
+          status: string
+          trace: Json
+        }
+        Update: {
+          athlete_id?: string
+          attribute?: string
+          calculated_at?: string
+          calculation_id?: string
+          confidence?: number
+          coverage?: number
+          current?: number | null
+          engine_version?: string
+          evidence_ids?: string[]
+          id?: string
+          peak?: number | null
+          peak_updated?: boolean
+          status?: string
+          trace?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_snapshots_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stat_snapshots_calculation_id_athlete_id_fkey"
+            columns: ["calculation_id", "athlete_id"]
+            isOneToOne: false
+            referencedRelation: "stat_calculations"
+            referencedColumns: ["id", "athlete_id"]
+          },
+          {
+            foreignKeyName: "stat_snapshots_engine_version_fkey"
+            columns: ["engine_version"]
+            isOneToOne: false
+            referencedRelation: "engine_versions"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       dev_reset_spawn: { Args: { keep_context?: boolean }; Returns: undefined }
+      engine_record_calculation: {
+        Args: {
+          p_athlete_id: string
+          p_engine: Json
+          p_reason: string
+          p_result: Json
+        }
+        Returns: string
+      }
       spawn_state_rank: { Args: { state: string }; Returns: number }
     }
     Enums: {
