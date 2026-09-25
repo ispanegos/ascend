@@ -1,24 +1,19 @@
 .mark {
   display: inline-flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.row {
-  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
 }
 
 .glyph {
   color: var(--accent-primary);
+  filter: drop-shadow(0 0 10px rgba(243, 178, 79, 0.35));
 }
 
 .word {
   font-family: var(--font-fantasy);
   font-weight: 700;
   font-size: 1.25rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   line-height: 1;
   background: linear-gradient(180deg, var(--accent-primary-bright) 10%, var(--accent-primary) 55%, var(--accent-primary-dark) 100%);
   -webkit-background-clip: text;
@@ -30,16 +25,16 @@
   font-size: 1.75rem;
 }
 
-.xl .word {
-  font-size: clamp(2.5rem, 13vw, 3rem);
+/* xl: stacked — the gate above the name, like a crest. */
+.xl {
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.tagline {
-  font-family: var(--font-fantasy);
-  font-size: var(--text-meta-size);
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--text-display);
+.xl .word {
+  font-size: clamp(2.25rem, 12vw, 2.75rem);
+  letter-spacing: 0.14em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
 }
 
 @media (forced-colors: active) {

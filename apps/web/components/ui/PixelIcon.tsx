@@ -1,13 +1,18 @@
 import type { SVGProps } from "react";
+import { PIXEL_ICONS_HD } from "./pixel-icons-hd";
 import { PIXEL_ICONS, type PixelIconName } from "./pixel-icons";
 
 export type { PixelIconName } from "./pixel-icons";
 
-type Tone = "o" | "f" | "h";
+/** Includes the brand mark, which exists only at high resolution. */
+export type PixelGlyph = PixelIconName | "ascend-mark";
+
+type Tone = "o" | "f" | "s" | "l" | "h";
+const TONES: readonly Tone[] = ["o", "f", "s", "l", "h"];
 
 /** One path per tone: each horizontal run of pixels becomes a rectangle. */
 function toPaths(rows: readonly string[]): Record<Tone, string> {
-  const paths: Record<Tone, string> = { o: "", f: "", h: "" };
+  const paths: Record<Tone, string> = { o: "", f: "", s: "", l: "", h: "" };
   rows.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
@@ -21,20 +26,44 @@ function toPaths(rows: readonly string[]): Record<Tone, string> {
   return paths;
 }
 
-const CACHE = new Map<PixelIconName, Record<Tone, string>>();
+const CACHE = new Map<string, { size: number; paths: Record<Tone, string> }>();
 
-function pathsFor(name: PixelIconName) {
-  let paths = CACHE.get(name);
-  if (!paths) {
-    paths = toPaths(PIXEL_ICONS[name]);
-    CACHE.set(name, paths);
+/**
+ * ≥ 20 px: the detailed 24/32-grid sprite (shaded, V2 pass 2). Smaller: the
+ * 16-grid glyph, which stays legible at badge size.
+ */
+function spriteFor(name: PixelGlyph, size: number) {
+  const hd = size >= 20 || name === "ascend-mark" ? (PIXEL_ICONS_HD as Record<string, readonly string[]>)[name] : undefined;
+  const rows = hd ?? PIXEL_ICONS[name as PixelIconName];
+  const key = `${name}:${hd ? "hd" : "sd"}`;
+  let sprite = CACHE.get(key);
+  if (!sprite) {
+    sprite = { size: rows.length, paths: toPaths(rows) };
+    CACHE.set(key, sprite);
   }
-  return paths;
+  return sprite;
 }
 
+/** 16-grid tones map onto the same palette: o → base, f → shade, h → glint. */
+const SD_FILL: Record<Tone, string> = {
+  o: "currentColor",
+  f: "var(--pixel-shade)",
+  s: "var(--pixel-shade)",
+  l: "var(--pixel-light)",
+  h: "var(--pixel-glint)",
+};
+
+const HD_FILL: Record<Tone, string> = {
+  o: "var(--pixel-outline)",
+  f: "currentColor",
+  s: "var(--pixel-shade)",
+  l: "var(--pixel-light)",
+  h: "var(--pixel-glint)",
+};
+
 interface PixelIconProps extends Omit<SVGProps<SVGSVGElement>, "children"> {
-  name: PixelIconName;
-  /** CSS pixels. Multiples of 16 render the crispest pixels. */
+  name: PixelGlyph;
+  /** CSS pixels. Multiples of the grid (16, 24, 32…) render the crispest pixels. */
   size?: number;
   /** Gives the icon an accessible name; otherwise it is decorative. */
   title?: string;
@@ -42,15 +71,16 @@ interface PixelIconProps extends Omit<SVGProps<SVGSVGElement>, "children"> {
 
 /**
  * Pixel-art identity icon (Design System V2 §10). Colour comes from
- * `currentColor`; the highlight tone from `--pixel-highlight`.
+ * `currentColor`; outline, shade and light tones derive from it.
  */
 export function PixelIcon({ name, size = 24, title, style, ...rest }: PixelIconProps) {
-  const paths = pathsFor(name);
+  const sprite = spriteFor(name, size);
+  const fills = sprite.size > 16 ? HD_FILL : SD_FILL;
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 16 16"
+      viewBox={`0 0 ${sprite.size} ${sprite.size}`}
       shapeRendering="crispEdges"
       aria-hidden={title ? undefined : true}
       role={title ? "img" : undefined}
@@ -59,9 +89,7 @@ export function PixelIcon({ name, size = 24, title, style, ...rest }: PixelIconP
       {...rest}
     >
       {title ? <title>{title}</title> : null}
-      {paths.f ? <path d={paths.f} fill="currentColor" fillOpacity={0.42} /> : null}
-      {paths.o ? <path d={paths.o} fill="currentColor" /> : null}
-      {paths.h ? <path d={paths.h} fill="var(--pixel-highlight, var(--text-display))" fillOpacity={0.92} /> : null}
+      {TONES.map((tone) => (sprite.paths[tone] ? <path key={tone} d={sprite.paths[tone]} style={{ fill: fills[tone] }} /> : null))}
     </svg>
   );
 }

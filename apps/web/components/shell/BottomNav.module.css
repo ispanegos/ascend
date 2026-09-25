@@ -94,12 +94,12 @@
 
 /* ASCEND: a raised gate plate, notched like the pixel frames. */
 .primary .well {
-  width: 52px;
-  height: 40px;
-  margin-top: -14px;
+  width: 56px;
+  height: 44px;
+  margin-top: -18px;
   border: 1px solid var(--border-highlight);
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, var(--ascend-amber-deep), var(--bg-deep));
+  background: radial-gradient(80% 90% at 50% 30%, rgba(243, 178, 79, 0.22), transparent 70%), linear-gradient(180deg, var(--ascend-amber-deep), var(--bg-deep));
   color: var(--accent-primary);
   box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.45);
 }

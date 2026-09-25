@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "ASCEND",
     short_name: "ASCEND",
-    description: "Real progress. Real you. An RPG where the character is your real body.",
+    description: "An RPG where the character is your real body. There is always another summit.",
     start_url: "/",
     scope: "/",
     display: "standalone",

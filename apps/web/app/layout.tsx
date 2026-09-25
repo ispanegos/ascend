@@ -32,7 +32,7 @@ const cinzel = Cinzel({
 
 export const metadata: Metadata = {
   title: { default: "ASCEND", template: "%s · ASCEND" },
-  description: "Real progress. Real you. An RPG where the character is your real body.",
+  description: "An RPG where the character is your real body. There is always another summit.",
   applicationName: "ASCEND",
   appleWebApp: { capable: true, title: "ASCEND", statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },

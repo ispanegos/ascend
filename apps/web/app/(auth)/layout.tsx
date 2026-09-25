@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <header className={styles.brand}>
         <Artwork id="world.dusk-ruins" ratio="2 / 1" priority scrim="bottom" className={styles.art} />
         <div className={styles.wordmark}>
-          <BrandMark size="xl" tagline />
+          <BrandMark size="xl" />
         </div>
       </header>
       <main id="main" className={styles.main}>
