@@ -188,6 +188,23 @@ Engine `0.1.1`. Not deployed.
 - [x] Update caps, decay and determinism unchanged and tested
 - [x] Full regression: pytest, Vitest, pgTAP, Playwright, typecheck, lint, build
 
+## Design System V2 — visual redesign · `DONE (local) · awaiting visual approval`
+
+Dark-fantasy pixel-art visual language applied to every existing screen
+before Milestone 4 (ADR-037, `docs/DESIGN_SYSTEM_V2.md`). No engine,
+scoring, Spawn or database behaviour changes.
+
+- Tokens, typography (Barlow + Cinzel), 23 pixel icons, art registry with
+  procedural placeholders
+- Components: BottomNav (Today · Quests · Ascend · Stats · You), ScreenHeader,
+  SectionHeader, Card variants, MetricCard, StatusBadge, AttributeIcon,
+  ProgressBar, ConfidenceBar, QuestCard, BossCard, TimerDisplay,
+  WorkoutControl, PixelArtFrame, Artwork, Empty/Locked states
+- Screens: auth, onboarding, Spawn Point, sessions, tests, Spawn Complete,
+  Initializing, Initialized, Stats, Stat detail, Today, Quests, Ascend,
+  Bosses, You; review gallery at `/design` (dev or `ASCEND_DESIGN_GALLERY=1`)
+- Screenshots: `docs/design/screens-v2/390`, `/320`
+
 ## Milestone 4 — Athlete dashboard · `NOT STARTED`
 
 Today (§61), Stats + Stat cards (§35), Stat detail (§63), Paths (§18),

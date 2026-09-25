@@ -743,3 +743,38 @@ for v0.1 only as a provisional calibration parameter. It stays configurable
 (`[estimation.missing_prior]`), is marked provisional in the configuration
 and the calibration audit, and will be reviewed against real athlete data.
 
+---
+
+## ADR-037 — Design System V2 supersedes the cream/minimal visual system
+
+**Status:** Proposed · Design System V2 · awaiting visual approval
+
+**Context.** The Milestone 1–3 look (spec §27–§29: warm cream surfaces, deep
+green brand, Inter, "cinematic through type, not decoration") was
+deprecated in favour of a dark-fantasy, pixel-art direction
+(`docs/design/reference-v2.png`) before Milestone 4 builds Quests, Paths and
+Bosses on top of it.
+
+**Decision.** Design System V2 (`docs/DESIGN_SYSTEM_V2.md`) replaces it:
+- Dark palette in two token layers (palette primitives + semantic tokens);
+  gold = progression/provisional, cyan = measured data, teal/green =
+  verified/success, red/orange = Boss/danger, cream = fantasy type.
+- Type: Barlow + Barlow Semi Condensed (product, tabular figures) and Cinzel
+  (fantasy display, sparingly). Inter is removed.
+- 23 pixel-art identity icons; utility controls stay vector.
+- Art by semantic id through `lib/art.ts`; all current art is procedural,
+  original placeholder art replaceable file-for-file.
+- Navigation: Today · Quests · **Ascend** (centre) · Stats · You. Bosses
+  leaves the bar (reachable at `/bosses`); `/quests` is a destination only.
+- Fantasy intensity varies by context (strongest on Ascend/Boss, weakest on
+  Stats/workout). No XP, coins or fictional levels — real progress is the game.
+
+**Unchanged.** Engine semantics, scoring, Spawn calculations, the database,
+copy that carries meaning (Unranked, Provisional, Confidence, "not a
+percentile"), and integer display of Stats (spec §3).
+
+**Consequences.** Spec §27–§29 are historical for visuals. The start
+palette's muted text (`#71868e`) and red (`#ef4b45`) fail AA as text on
+raised surfaces, so V2 uses `#8a9da4` and `#ff6b63` for text and keeps the
+originals for decoration and fills.
+
