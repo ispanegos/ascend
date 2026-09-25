@@ -22,7 +22,8 @@ export async function proxy(request: NextRequest) {
     return redirectTo(`${SIGN_IN_PATH}${next}`);
   }
 
-  if (userId && (pathname === "/" || isAuthOnlyPath(pathname))) {
+  // "/" itself is resolved by app/page.tsx, which reads the Spawn state.
+  if (userId && isAuthOnlyPath(pathname)) {
     return redirectTo(HOME_PATH);
   }
 

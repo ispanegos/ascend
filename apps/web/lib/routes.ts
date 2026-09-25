@@ -5,8 +5,12 @@
 
 export const SIGN_IN_PATH = "/sign-in";
 export const SIGN_UP_PATH = "/sign-up";
-/** Temporary home until Spawn state exists (ADR-005). */
-export const HOME_PATH = "/today";
+/**
+ * Signed-in landing. The root resolves the athlete's Spawn state and redirects
+ * to the exact screen to resume (spec §49, ADR-010).
+ */
+export const HOME_PATH = "/";
+export const TODAY_PATH = "/today";
 
 const PUBLIC_PREFIXES = ["/sign-in", "/sign-up", "/auth/", "/offline"] as const;
 const AUTH_ONLY_PATHS = [SIGN_IN_PATH, SIGN_UP_PATH] as const;

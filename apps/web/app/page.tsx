@@ -1,13 +1,17 @@
 import { redirect } from "next/navigation";
+import { getSpawnSnapshot, sessionPointers } from "@/features/spawn/data";
+import { resolveSpawnPath } from "@/features/spawn/routing";
 import { getSessionUser } from "@/lib/auth";
-import { HOME_PATH, SIGN_IN_PATH } from "@/lib/routes";
+import { SIGN_IN_PATH } from "@/lib/routes";
 
 /**
- * Root. Redirects by session (proxy.ts normally handles this first).
- * Milestone 2 replaces the signed-in target with the Spawn-state redirect
- * (spec §49, ADR-005).
+ * Authenticated root: sends the athlete to exactly where they left Spawn, or
+ * to Today once Spawn is complete (spec §11, §49, ADR-010).
  */
 export default async function RootPage() {
   const user = await getSessionUser();
-  redirect(user ? HOME_PATH : SIGN_IN_PATH);
+  if (!user) redirect(SIGN_IN_PATH);
+
+  const { state, settings, sessions } = await getSpawnSnapshot(user.id);
+  redirect(resolveSpawnPath(state, settings.onboarding_step, sessionPointers(sessions)));
 }
