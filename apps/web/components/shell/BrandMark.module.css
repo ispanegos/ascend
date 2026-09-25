@@ -1,0 +1,26 @@
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-strong);
+}
+
+.glyph {
+  width: 28px;
+  height: 28px;
+}
+
+.word {
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-size: 0.9375rem;
+}
+
+.lg .glyph {
+  width: 40px;
+  height: 40px;
+}
+
+.lg .word {
+  font-size: 1.125rem;
+}

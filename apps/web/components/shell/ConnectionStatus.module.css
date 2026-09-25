@@ -1,0 +1,24 @@
+.region {
+  position: fixed;
+  z-index: 60;
+  top: calc(env(safe-area-inset-top) + var(--space-2));
+  left: var(--mobile-gutter);
+  right: var(--mobile-gutter);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.banner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-ink-strong);
+  color: var(--color-boss-ink);
+  font-size: var(--text-meta-size);
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
