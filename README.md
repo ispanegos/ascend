@@ -11,14 +11,18 @@ Personal athletic progression system. *There is always another summit.*
 ```text
 apps/web          Next.js 16 app (App Router, strict TypeScript, CSS Modules)
 packages/shared   Domain types shared across the app (spec vocabulary)
-engine            Python ASCEND Engine (Milestone 3)
+engine            Python ASCEND Stats Engine (pure; see engine/README.md)
 supabase          Config, migrations, pgTAP tests
 docs              Spec, plan, decision log
 ```
 
 ## Requirements
 
-Node 24 (see `.nvmrc`), npm 11, Docker, Supabase CLI.
+Node 24 (see `.nvmrc`), npm 11, Python ≥ 3.11, Docker, Supabase CLI.
+
+Engine setup (once): `cd engine && python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"`.
+`apps/web/.env.local` also needs the server-only `SUPABASE_SERVICE_ROLE_KEY`
+(from `supabase status`) to persist Stats (ADR-024).
 
 ## Local development
 
@@ -48,6 +52,8 @@ supabase gen types typescript --local > apps/web/lib/supabase/database.types.ts
 npm run typecheck   # tsc --noEmit, all workspaces
 npm run lint        # eslint, zero warnings
 npm test            # vitest unit tests
+npm run test:engine # pytest: engine unit + integration tests
+npm run engine:report # Stats for the synthetic athletes
 npm run test:db     # pgTAP RLS tests (needs `supabase start`)
 npm run test:e2e    # Playwright at 320/390/430/768/1280 px + iPhone WebKit
 ```

@@ -135,14 +135,31 @@ Verified on 2026-09-25: 208 unit tests, 77 pgTAP assertions, 146 E2E tests
 runs only at 390 px), production build. Not yet deployed: the remote Supabase
 migration and Vercel deploy are pending approval.
 
-## Milestone 3 — Engine · `NOT STARTED`
+## Milestone 3 — Engine · `DONE (local)`
 
-Python package under `engine/ascend_engine` (§44). Versioned scoring curves
-as configuration marked `CALIBRATION_REQUIRED` / engine 0.1 (§4, §15, §54),
-feature extraction, aggregation, Confidence (§6), Overall (§8),
-Current/Peak (§7), evidence update (§16), decay (§17). Unit + property tests
-before any UI wiring (§0.16, §55). Blocked until the M2 raw-evidence model is
-stable (§70.7).
+Stats Engine v0.1: raw Spawn evidence → Endurance, Strength, Power, Core,
+Mobility, Agility, Recovery and Overall with Current, Peak, Confidence,
+status, engine version and a calculation trace. Not deployed (ADR-023 §10).
+
+| Area | Implementation | Spec refs |
+|---|---|---|
+| Product decisions | ADR-023; migration `20260927090000_product_decisions.sql` maps vocabularies; 18+; unusual values need confirmation | brief |
+| Engine package | `engine/ascend_engine`: `evidence` (parsing), `assessment` (features), `scoring` (curves, normalization), `aggregation` (subdomains, attributes, Overall), `confidence`, `progression` (Current/Peak, update, decay), `config`, `engine.py` (pipeline + trace), CLI + HTTP | §15, §44, §45 |
+| Calibration | `config/v0_1_0.toml`, validated, `provisional`, hashed | §4, §54, §73 |
+| Persistence | Migration `20260928090000_stats_engine.sql`: `engine_versions`, `scoring_curves`, `engine_config`, `stat_calculations`, `calculation_evidence`, `stat_snapshots`, `overall_snapshots`; append-only; `engine_record_calculation()` service-role only, idempotent | §46, §47, §48 |
+| Initialization | `initializeAthleteProfile` action: CALIBRATING → engine → snapshots → COMPLETE | brief §11 |
+| UI | Initializing screen, Athlete Profile Initialized, `/stats`, `/stats/[attribute]` (why, confidence components, evidence), `/ascend/paths` placeholder; shell locked until COMPLETE | §35, §60, §63 |
+| Tests | pytest (engine), Vitest, pgTAP, Playwright (journey at 390 and 320) | §55 |
+
+### Acceptance
+
+- [x] Deterministic, recalculable, versioned; every snapshot carries engine version and trace
+- [x] Unknown ≠ zero (Power UNRANKED; missing tests lower Confidence only)
+- [x] Pain ≠ poor performance (quality, not score)
+- [x] Overall per §8 with renormalization; UNRANKED until the five required Stats exist
+- [x] Update caps and decay implemented in configuration, tested
+- [x] Initialization idempotent; snapshots append-only; clients cannot write Stats
+- [x] All M1/M2 regression suites pass
 
 ## Milestone 4 — Athlete dashboard · `NOT STARTED`
 

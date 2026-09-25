@@ -165,7 +165,7 @@ barely visible.
 
 ## ADR-010 — Root route resolves by Spawn state; app shell stays reachable
 
-**Status:** Accepted · Milestone 2 · Supersedes ADR-005
+**Status:** Partly superseded by ADR-023 (shell is blocked) · Milestone 2 · Supersedes ADR-005
 
 **Context.** §49: the authenticated root redirects according to Spawn state.
 §25: during Spawn the normal shell is replaced by a focused flow. Spawn cannot
@@ -317,7 +317,7 @@ later (status `open` → `resolved`).
 
 ## ADR-017 — Option sets and bounds the spec leaves open
 
-**Status:** Proposed · Milestone 2 · needs product review
+**Status:** Superseded by ADR-023 · Milestone 2
 
 **Context.** The spec defines what to record but not every option list or
 input bound.
@@ -434,3 +434,154 @@ fails in CI instead of in the athlete's hands.
 
 **Consequences.** One extra round trip on a few writes. Ownership and
 identity columns stay immutable from the client.
+
+---
+
+## ADR-023 — Approved product decisions after Milestone 2 review
+
+**Status:** Accepted · product owner approval, 2026-09-25 · Supersedes ADR-017
+
+1. **Frame technique:** `clean`, `minor_compensation`, `major_compensation`,
+   `stopped_for_technique`.
+2. **Limiting-factor vocabulary** (shared by every test): `nothing`,
+   `breath`, `muscular_fatigue`, `grip`, `technique`, `pain`, `pacing`,
+   `other`. Each test exposes only the relevant subset; labels can be
+   test-specific (e.g. farmer carry "Posture failed" = `technique`).
+3. **Skip / cannot-perform reasons:** `cannot_perform_safely`, `pain`,
+   `missing_equipment`, `environment_unavailable`,
+   `does_not_know_technique`, `other`. A missing test is UNKNOWN, never zero.
+4. **Experience:** `never_trained`, `beginner`, `recreational`, `trained`,
+   `competitive`.
+5. **Inactivity:** `active`, `under_1_month`, `1_3_months`, `3_6_months`,
+   `6_12_months`, `over_12_months`.
+   Experience and inactivity are context only and never assign Stats.
+6. **ASCEND v0.1 is 18+.**
+7. **Plausibility limits are typo protection, not physiological claims.**
+   Input is never clamped. Values outside a *typical* range but inside the
+   hard limit need an explicit "Yes, that's correct" before saving.
+8. **Engine session estimate:** about 45 minutes.
+9. **Main app shell is blocked during Spawn and Calibration.** Profile,
+   profile edits and sign-out stay available.
+10. **No deployment yet.** Milestone 3 stays local; the hosted Supabase
+    migration and Vercel deploy follow the Stats Engine review.
+
+**Migration of existing values** (`20260927090000_product_decisions.sql`):
+technique `breakdown` → `major_compensation`; limiting factors `fatigue`,
+`legs` → `muscular_fatigue`, `posture_failure`, `position_lost` → `technique`,
+`grip_failure` → `grip`, `time_cap`, `could_continue` → `nothing`,
+`voluntary`, `voluntary_stop` → `other`; strength stop reasons `effort` →
+`muscular_fatigue`, `no_heavier_load` → `nothing`; skip reasons `unable`,
+`unsafe` → `cannot_perform_safely`, `no_equipment` → `missing_equipment`,
+`no_space` → `environment_unavailable`, `fatigue`, `time` → `other`;
+experience `none` → `never_trained`, `under_1_year` → `beginner`, `1_3_years`
+→ `recreational`, `over_3_years` → `trained`; inactivity `under_3_months` →
+`1_3_months`, `3_12_months` → `6_12_months`. Only local development data
+exists, so these mappings affect no real athlete.
+
+---
+
+## ADR-024 — Engine runtime and the single write path for Stats
+
+**Status:** Accepted · Milestone 3
+
+**Context.** §45: the Python engine owns domain calculations; the frontend
+must not duplicate scoring. §48: privileged engine writes happen server-side;
+the service-role key never reaches the browser. Hosting for Python is open.
+
+**Decision.** The engine is a pure function (JSON evidence in → JSON result
+out) with no database access and no third-party runtime dependencies. The
+Next.js server reads the athlete's raw evidence with *their* session (RLS),
+runs the engine — as a local subprocess (`python3 -m ascend_engine
+calculate`), or over HTTP when `ASCEND_ENGINE_URL` is set — and persists the
+result through `public.engine_record_calculation()`. That function is
+executable by `service_role` only; `SUPABASE_SERVICE_ROLE_KEY` is a
+server-only variable read solely by `lib/supabase/admin.ts`. Clients cannot
+insert, update or delete any derived row.
+
+**Consequences.** Hosting the engine is a deployment choice (Vercel Python
+function, a small container running `ascend_engine serve`, or a subprocess on
+a Node host). It must be decided before deploying (see "needs approval").
+
+---
+
+## ADR-025 — v0.1 calibration is provisional configuration
+
+**Status:** Proposed · Milestone 3 · needs product review
+
+**Decision.** Every curve, weight, cap and threshold lives in
+`engine/ascend_engine/config/v0_1_0.toml`, validated at load (monotonic
+curves, weights summing to 1, known references). It is marked
+`calibration_status = "provisional"` and stored with its SHA-256 hash in
+`engine_versions`. Changing the file without bumping the engine version is
+rejected by the database. The curves are internal calibration: never
+described as norms, percentiles, rankings or medical thresholds. The
+assumptions behind them are listed in the Milestone 3 report.
+
+---
+
+## ADR-026 — Which observation is scored
+
+**Status:** Accepted · Milestone 3
+
+**Decision.** Per test, the newest evidence is scored (the current
+estimate); older comparable observations feed *repeatability*. Within one
+test: M01 best attempt; M02/M03 mean of both sides (asymmetry kept as a
+feature); M04 mean of each leg's best; M07 best time and mean errors; F02–F04
+the best set's ten-rep-equivalent load; F05/F06 the recorded attempt.
+Attempts within one Spawn session are not "comparable observations" for
+repeatability, so it stays at the spec default 0.5 after Spawn.
+
+---
+
+## ADR-027 — Pain and capped results change quality, never the score
+
+**Status:** Accepted · Milestone 3
+
+**Decision.** A completed test with pain keeps its measured score; its
+evidence quality is multiplied by 0.70 (lower Confidence). A test stopped for
+pain, skipped or not performed is a gap: its subdomain is unobserved
+(coverage falls), never zero. A result that hit a test cap or the equipment
+ceiling is a lower bound: quality × 0.85 and noted in the trace.
+
+---
+
+## ADR-028 — One complete Spawn can reach VERIFIED; Peak starts then
+
+**Status:** Proposed · Milestone 3 · needs product review
+
+**Context.** With the §6 formula, full coverage after a fresh Spawn gives
+0.45 + 0.25 + 0.15 × 0.5 + 0.15 × 0.85 ≈ 0.90 ≥ 0.70.
+
+**Decision.** Implemented as specified: a fully covered attribute is
+VERIFIED straight after Spawn, and Peak is set to that first Current.
+Recovery (one of three subdomains measurable) stays PROVISIONAL at ≈ 0.63.
+If a single session should not verify, the lever is configuration (e.g. a
+lower default repeatability or a higher threshold), not code.
+
+---
+
+## ADR-029 — Deterministic, idempotent calculations
+
+**Status:** Accepted · Milestone 3
+
+**Decision.** The engine reads no clock: `as_of` is the newest evidence
+time. The input hash covers the evidence, gaps, athlete context and previous
+Peaks. The database keeps one calculation per (athlete, engine version,
+input hash), so repeating initialization returns the existing calculation
+and adds nothing. Snapshots are append-only. The server sends only body mass
+(the weight recorded at or before the evidence): no v0.1 curve uses age, sex
+or height, and a changing age would otherwise change the input.
+
+---
+
+## ADR-030 — Retry the "JWT issued at future" race
+
+**Status:** Accepted · Milestone 3
+
+**Context.** Straight after sign-in, a fresh token was intermittently
+rejected by the API as "issued at future" and the first screen failed.
+
+**Decision.** The server Supabase client uses a fetch wrapper that retries
+only that response, at most twice (after 1 s and 2 s).
+
+**Consequences.** A rare, slower first load instead of an error screen.

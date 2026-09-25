@@ -18,6 +18,8 @@
     "test:db": "supabase test db",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "test:engine": "cd engine && .venv/bin/python -m pytest",
+    "engine:report": "cd engine && .venv/bin/python -m fixtures.report"
   }
 }
