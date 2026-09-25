@@ -58,7 +58,7 @@ export function StatusBadge({
   const meta = META[status];
   return (
     <span className={cx(styles.badge, styles[status], size === "sm" && styles.sm, className)} data-status={status}>
-      <PixelIcon name={meta.icon} size={size === "sm" ? 12 : 16} />
+      <PixelIcon name={meta.icon} size={12} />
       {label ?? meta.label}
     </span>
   );

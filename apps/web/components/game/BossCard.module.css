@@ -129,6 +129,7 @@
 .undiscovered {
   border-color: var(--border-strong);
   background: var(--bg-card);
+  box-shadow: var(--card-shadow);
 }
 
 .available .art,

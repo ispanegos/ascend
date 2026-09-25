@@ -20,9 +20,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background:
-    radial-gradient(120% 60% at 50% -10%, rgba(37, 199, 232, 0.06), transparent 60%),
-    var(--bg-app);
+  background: var(--bg-grain), var(--bg-atmosphere), var(--bg-app);
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-product);

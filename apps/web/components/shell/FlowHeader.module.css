@@ -6,7 +6,7 @@
   padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--mobile-gutter) var(--space-2);
   /* Opaque: text scrolling under a translucent bar competes with the title. */
   background: var(--bg-app);
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .bar {

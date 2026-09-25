@@ -1,12 +1,13 @@
 .state {
   overflow: hidden;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--bg-card);
+  box-shadow: var(--card-shadow);
 }
 
 .art {
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .inner {

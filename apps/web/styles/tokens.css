@@ -65,7 +65,17 @@
   --bg-elevated: var(--ascend-surface-2);
   --bg-sunken: var(--ascend-bg-deep);
   --bg-hover: var(--ascend-surface-3);
-  --bg-card: linear-gradient(180deg, rgba(18, 42, 52, 0.96), rgba(9, 27, 35, 0.98));
+  /* Cards separate by tone and light, not outlines (V2 pass 2). */
+  --bg-card: linear-gradient(180deg, rgba(24, 52, 63, 0.78), rgba(12, 30, 39, 0.82));
+  --bg-card-raised: linear-gradient(180deg, rgba(30, 62, 74, 0.85), rgba(15, 36, 46, 0.9));
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 12px 28px -14px rgba(0, 0, 0, 0.7);
+  /* Page atmosphere: faint light from above, a warm floor, a vignette. */
+  --bg-atmosphere:
+    radial-gradient(90% 45% at 50% -8%, rgba(37, 199, 232, 0.07), transparent 70%),
+    radial-gradient(80% 40% at 50% 108%, rgba(243, 178, 79, 0.05), transparent 70%),
+    radial-gradient(140% 100% at 50% 40%, transparent 55%, rgba(2, 8, 11, 0.55) 100%);
+  /* Static film grain; 3 % opacity, never animated. */
+  --bg-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
   --bg-card-solid: var(--ascend-surface-1);
   --bg-track: rgba(140, 175, 185, 0.14);
 
@@ -110,8 +120,10 @@
   --boss-name: var(--ascend-cream);
 
   /* Lines */
-  --border-default: var(--ascend-border-soft);
-  --border-strong: var(--ascend-border);
+  /* Quiet by default; strong borders are reserved for meaning. */
+  --border-subtle: rgba(140, 175, 185, 0.06);
+  --border-default: rgba(140, 175, 185, 0.1);
+  --border-strong: rgba(140, 175, 185, 0.2);
   --border-highlight: rgba(243, 178, 79, 0.65);
   --border-boss: rgba(239, 75, 69, 0.5);
   --border-data: rgba(37, 199, 232, 0.45);
@@ -124,13 +136,20 @@
   --focus-ring: var(--ascend-gold-bright);
 
   /* Buttons */
-  --button-primary-bg: linear-gradient(180deg, #4a3214 0%, var(--ascend-amber-deep) 55%, var(--ascend-amber-deeper) 100%);
-  --button-primary-bg-hover: linear-gradient(180deg, #5a3d18 0%, #45301a 55%, #2a1c0a 100%);
+  /* Illuminated gold: dark amber body, firelit upper band, gold edge. */
+  --button-primary-bg: linear-gradient(180deg, #c48a3a 0%, #8a5a1c 14%, #6a4212 52%, #4a2d0c 100%);
+  --button-primary-bg-hover: linear-gradient(180deg, #d69a45 0%, #9a6520 14%, #764a16 52%, #52320e 100%);
   --button-primary-border: var(--ascend-gold);
-  --button-primary-text: var(--ascend-cream);
-  --button-primary-highlight: inset 0 1px 0 rgba(255, 212, 122, 0.28);
+  --button-primary-text: #fff3d6;
+  --button-primary-highlight: inset 0 1px 0 rgba(255, 226, 160, 0.55), inset 0 -8px 16px rgba(20, 10, 2, 0.35);
   --button-boss-bg: linear-gradient(180deg, #4a1a18 0%, #2e1013 100%);
   --button-success-bg: linear-gradient(180deg, #123a30 0%, #0c2a23 100%);
+
+  /* Pixel icon tones, derived from the icon's own colour at the use site. */
+  --pixel-outline: color-mix(in srgb, currentColor 22%, #03070a);
+  --pixel-shade: color-mix(in srgb, currentColor 58%, #03070a);
+  --pixel-light: color-mix(in srgb, currentColor 75%, #fff8e6);
+  --pixel-glint: color-mix(in srgb, currentColor 35%, #fff8e6);
 
   /* Artwork fallbacks: shown while art loads or if a file is missing */
   --art-fallback-dusk: linear-gradient(180deg, var(--ascend-bg-deep) 0%, #2a2338 45%, #5a2f3a 75%, #9a4a36 100%);
@@ -139,14 +158,19 @@
   --art-fallback-boss: radial-gradient(50% 45% at 50% 35%, rgba(201, 65, 54, 0.45), transparent 70%), var(--ascend-boss-bg);
   --art-fallback-night: linear-gradient(180deg, var(--ascend-bg-deep), var(--ascend-surface-2));
 
-  /* Attribute identity hues: recognition only, never status (V2 §10) */
-  --attr-endurance: #5fd4ee;
+  /*
+   * Attribute identity (V2 §10, pass 2): two families from the palette, no
+   * rainbow. Warm gold for force (Strength, Power, Core), cool cyan for
+   * motion and capacity (Endurance, Mobility, Agility, Recovery). The icon
+   * and label carry identity; status is never shown by hue.
+   */
+  --attr-endurance: var(--ascend-cyan);
   --attr-strength: var(--ascend-gold);
   --attr-power: var(--ascend-gold-bright);
-  --attr-core: #ea9a5b;
-  --attr-mobility: #8ad0dc;
-  --attr-agility: #b8e07a;
-  --attr-recovery: #b7a4f2;
+  --attr-core: var(--ascend-gold);
+  --attr-mobility: var(--ascend-cyan);
+  --attr-agility: var(--ascend-cyan);
+  --attr-recovery: var(--ascend-cyan);
   --attr-overall: var(--ascend-cream);
 
   /* ------------------------------------------------------------------

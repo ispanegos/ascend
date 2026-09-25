@@ -1,16 +1,19 @@
-/* V2 §14: each status has its own rune, word, tone and border style. */
+/*
+ * V2 §14, pass 2: ordinary statuses are quiet and compact — rune, word, a
+ * faint edge. Events (New Peak, Recoil, Revenge) are loud on purpose.
+ */
 
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 26px;
-  padding: 3px var(--space-2) 3px 6px;
-  border-radius: var(--radius-sm);
-  border: 1px solid currentColor;
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  gap: 5px;
+  min-height: 22px;
+  padding: 2px 7px 2px 5px;
+  border-radius: var(--radius-xs);
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: transparent;
   font-family: var(--font-product-condensed);
-  font-size: var(--text-label-size);
+  font-size: var(--text-micro-size);
   font-weight: 600;
   letter-spacing: 0.12em;
   line-height: 1.2;
@@ -19,10 +22,9 @@
 }
 
 .sm {
-  min-height: 22px;
+  min-height: 20px;
   gap: 4px;
-  padding: 2px 6px 2px 4px;
-  font-size: var(--text-micro-size);
+  padding: 1px 6px 1px 4px;
 }
 
 .unranked,
@@ -30,7 +32,6 @@
 .scheduled {
   color: var(--status-unranked);
   border-style: dashed;
-  background: transparent;
 }
 
 .provisional,
@@ -40,7 +41,7 @@
 
 .active {
   color: var(--accent-primary-bright);
-  box-shadow: var(--glow-primary);
+  border-color: var(--border-highlight);
 }
 
 .verified,
@@ -54,8 +55,13 @@
   color: var(--status-peak);
 }
 
+/* ---- Events: filled, full edge, lit. */
+
 .new-peak {
-  color: var(--status-peak);
+  color: var(--ascend-ink-on-gold);
+  border-color: var(--accent-primary-bright);
+  background: linear-gradient(180deg, var(--accent-primary-bright), var(--accent-primary));
+  box-shadow: var(--glow-primary);
   animation: peak-pulse var(--duration-moment) var(--ease-out) 2;
 }
 
@@ -64,14 +70,20 @@
   color: var(--status-recoil);
 }
 
+.recoil {
+  border-color: var(--status-recoil);
+  background: rgba(239, 123, 59, 0.14);
+}
+
 .revenge {
   color: var(--accent-primary-bright);
   border-color: var(--boss-accent-bright);
-  background: linear-gradient(90deg, rgba(239, 75, 69, 0.18), rgba(243, 178, 79, 0.14));
+  background: linear-gradient(90deg, rgba(239, 75, 69, 0.28), rgba(243, 178, 79, 0.2));
+  box-shadow: var(--glow-boss);
 }
 
 @keyframes peak-pulse {
   50% {
-    box-shadow: var(--glow-primary);
+    box-shadow: 0 0 0 1px rgba(255, 212, 122, 0.6), 0 0 30px rgba(243, 178, 79, 0.5);
   }
 }
