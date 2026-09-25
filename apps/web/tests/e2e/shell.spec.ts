@@ -43,16 +43,24 @@ test.describe("authenticated shell", () => {
 
   test("bottom navigation never covers the end of the page", async ({ page }) => {
     await page.goto("/profile");
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const signOut = page.getByRole("button", { name: "Sign out" });
+    // Wait for the streamed page before measuring the end of it.
+    await expect(signOut).toBeAttached();
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForFunction(() => window.scrollY + window.innerHeight >= document.body.scrollHeight - 2);
     const nav = page.getByRole("navigation", { name: "Primary" });
     const [buttonBox, navBox] = await Promise.all([signOut.boundingBox(), nav.boundingBox()]);
     expect(buttonBox!.y + buttonBox!.height).toBeLessThanOrEqual(navBox!.y);
   });
 
-  test("signed-in users are sent away from sign-in", async ({ page }) => {
+  test("signed-in users are sent away from sign-in, to where Spawn resumes", async ({ page }) => {
     await page.goto("/sign-in");
-    await expect(page).toHaveURL(/\/today$/);
+    await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
+  });
+
+  test("Today points back into Spawn instead of showing an empty dashboard", async ({ page }) => {
+    await page.goto("/today");
+    await expect(page.getByRole("link", { name: "Continue Spawn" })).toBeVisible();
   });
 
   test("profile reads the athlete's own row through RLS", async ({ page }) => {

@@ -103,7 +103,11 @@ describe("components consume semantic tokens only (spec §28)", () => {
     });
   }
 
-  const files = [...cssModules(join(webRoot, "components")), ...cssModules(join(webRoot, "app"))];
+  const files = [
+    ...cssModules(join(webRoot, "components")),
+    ...cssModules(join(webRoot, "app")),
+    ...cssModules(join(webRoot, "features")),
+  ];
 
   it("finds component stylesheets", () => {
     expect(files.length).toBeGreaterThan(5);

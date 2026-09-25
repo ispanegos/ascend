@@ -16,8 +16,9 @@ setup("sign up a test athlete", async ({ page }) => {
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/today$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Today" })).toBeVisible();
+  // A new athlete lands on Spawn, not an empty dashboard (spec §11, §49).
+  await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Create your athlete profile." })).toBeVisible();
 
   mkdirSync(AUTH_DIR, { recursive: true });
   writeFileSync(CREDENTIALS, JSON.stringify({ email, password }));
