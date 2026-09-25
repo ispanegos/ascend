@@ -20,9 +20,15 @@ interface ChipGroupProps {
   multiple?: boolean;
   /** Form field name, so chips submit with native forms. */
   name?: string;
-  hint?: string;
+  hint?: string | undefined;
   /** Visually hide the legend when a surrounding heading already names the group. */
   hideLegend?: boolean;
+  /**
+   * `wrap`: pills that flow (default). `stack`: full-width rows for long
+   * labels. `grid`: equal columns, like a segmented control.
+   */
+  layout?: "wrap" | "stack" | "grid";
+  error?: string | undefined;
 }
 
 /**
@@ -39,10 +45,14 @@ export function ChipGroup({
   name,
   hint,
   hideLegend = false,
+  layout = "wrap",
+  error,
 }: ChipGroupProps) {
   const autoName = useId();
   const groupName = name ?? autoName;
   const hintId = hint ? `${autoName}-hint` : undefined;
+  const errorId = error ? `${autoName}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   function toggle(optionValue: string, checked: boolean) {
     if (multiple) {
@@ -57,14 +67,14 @@ export function ChipGroup({
   }
 
   return (
-    <fieldset className={styles.group} aria-describedby={hintId}>
+    <fieldset className={styles.group} aria-describedby={describedBy} aria-invalid={error ? true : undefined}>
       <legend className={cx(styles.legend, hideLegend && "visually-hidden")}>{legend}</legend>
       {hint ? (
         <p id={hintId} className={styles.hint}>
           {hint}
         </p>
       ) : null}
-      <div className={styles.chips}>
+      <div className={cx(styles.chips, layout !== "wrap" && styles[layout])}>
         {options.map((option) => {
           const checked = value.includes(option.value);
           return (
@@ -83,6 +93,11 @@ export function ChipGroup({
           );
         })}
       </div>
+      {error ? (
+        <p id={errorId} className={styles.error}>
+          <span aria-hidden="true">!</span> {error}
+        </p>
+      ) : null}
     </fieldset>
   );
 }

@@ -24,6 +24,37 @@
   gap: var(--space-2);
 }
 
+.stack {
+  flex-direction: column;
+}
+
+.stack .chip {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  padding-block: var(--space-3);
+}
+
+.stack .selected {
+  padding-block: calc(var(--space-3) - 1px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr));
+}
+
+.grid .chip {
+  justify-content: center;
+  text-align: center;
+}
+
+.error {
+  margin-top: var(--space-2);
+  color: var(--color-danger);
+  font-size: var(--text-meta-size);
+  font-weight: 600;
+}
+
 .chip {
   position: relative;
   display: inline-flex;
@@ -45,7 +76,7 @@
 
 .chip span {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .selected {

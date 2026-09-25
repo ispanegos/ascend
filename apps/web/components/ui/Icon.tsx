@@ -16,7 +16,14 @@ export type IconName =
   | "close"
   | "alert"
   | "offline"
-  | "chevron-right";
+  | "chevron-right"
+  | "chevron-left"
+  | "plus"
+  | "play"
+  | "pause"
+  | "reset"
+  | "flag"
+  | "edit";
 
 const PATHS: Record<IconName, ReactNode> = {
   // Sun-less "today": a calendar day with a marker.
@@ -66,6 +73,24 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   "chevron-right": <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />,
+  "chevron-left": <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  play: <path d="M8 5.5v13l10-6.5z" fill="currentColor" />,
+  pause: <path d="M8.5 5.5v13M15.5 5.5v13" strokeWidth={2.5} />,
+  reset: (
+    <>
+      <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+      <path d="M4.5 4.5v4h4" />
+    </>
+  ),
+  // A movement flag: a marker on a pole, not an alarm.
+  flag: (
+    <>
+      <path d="M6 21V4" />
+      <path d="M6 4.5h10.5l-2 3.75 2 3.75H6" />
+    </>
+  ),
+  edit: <path d="M4.5 19.5h4l10-10-4-4-10 10zM13 7l4 4" />,
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "children"> {

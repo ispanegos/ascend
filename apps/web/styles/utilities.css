@@ -144,3 +144,8 @@
   border-radius: var(--radius-xl);
   padding: clamp(20px, 6vw, 36px);
 }
+
+/* Focused flows render a sticky FlowHeader that carries the safe-area inset. */
+.app-page--flow {
+  padding-top: 0;
+}
