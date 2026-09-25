@@ -778,3 +778,28 @@ palette's muted text (`#71868e`) and red (`#ef4b45`) fail AA as text on
 raised surfaces, so V2 uses `#8a9da4` and `#ff6b63` for text and keeps the
 originals for decoration and fills.
 
+---
+
+## ADR-038 — Design System V2, pass 2: depth, detail, and confirmed choices
+
+**Status:** Proposed · awaiting visual approval
+
+**Confirmed by product.** Whole numbers in the main UI (engine keeps
+decimals; diagnostic views may show more when useful). No Recovery violet —
+attributes stay in the palette. Bosses stay out of the bottom navigation and
+belong to Ascend (the nav marks Ascend active on `/bosses`). "Real progress.
+Real you." is not a tagline; there is no official tagline.
+
+**Decision.** Keep the V2 architecture; refine the visuals: quiet borders and
+tonal cards with shadow, an atmospheric page background (gradients, vignette,
+static grain), illuminated-gold primary buttons, compact quiet status badges
+with loud event states, detailed 24/32-grid pixel icons generated from
+vector layers, a 32×32 gate brand mark, Cinzel used for identity and major
+moments, SVG-authored placeholder art at 2× phone resolution, screen-level
+compositions shared by product routes and review samples, and a
+`/design/review` page with six phone frames.
+
+**Consequences.** Placeholder art remains placeholder. Review routes need
+`ASCEND_DESIGN_GALLERY=1` outside development and are the only pages that
+may be framed (same origin).
+

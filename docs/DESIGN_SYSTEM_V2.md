@@ -1,9 +1,10 @@
 # ASCEND Design System V2
 
-> Status: **implemented, awaiting visual approval** · branch `design-system-v2` ·
+> Status: **pass 2 implemented, awaiting visual approval** · branch `design-system-v2` ·
 > supersedes the cream/minimal system of spec §27–§29 (ADR-037).
 > Primary reference: [`docs/design/reference-v2.png`](design/reference-v2.png).
-> Screens: [`docs/design/screens-v2/`](design/screens-v2/) (390 and 320 px).
+> Screens: [`docs/design/screens-v2/`](design/screens-v2/) (390 and 320 px, real routes) ·
+> review: [`docs/design/review-v2/composite.png`](design/review-v2/composite.png) (six sample screens).
 
 ## 1. Philosophy
 
@@ -70,11 +71,11 @@ CSS module.
 | `--ascend-cream` | `#f2e3c2` | |
 | `--ascend-ink-on-gold` | `#1a1206` | **added**: text on gold fills |
 
-Attribute identity hues (recognition only, never status):
-`--attr-endurance #5fd4ee`, `--attr-strength` gold, `--attr-power` gold-bright,
-`--attr-core #ea9a5b`, `--attr-mobility #8ad0dc`, `--attr-agility #b8e07a`,
-`--attr-recovery #b7a4f2` (moon violet — the one hue outside the brief's
-palette), `--attr-overall` cream.
+Attribute identity (pass 2): two families from the palette, no rainbow.
+Warm gold for force — Strength (gold), Power (gold-bright), Core (gold).
+Cool cyan for motion and capacity — Endurance, Mobility, Agility, Recovery.
+Overall is cream. Identity comes from the icon and label; hue never shows
+status. (The pass-1 Recovery violet `#b7a4f2` and the extra hues are gone.)
 
 ### Semantics
 
@@ -89,13 +90,28 @@ palette), `--attr-overall` cream.
 Glow (`--glow-primary`, `--glow-boss`, `--glow-data`) is reserved for
 selected, active, newly unlocked, Boss and the key CTA. Cards do not glow.
 
+### Depth, not outlines (pass 2)
+
+- Borders are quiet by default: `--border-subtle` (6 %), `--border-default`
+  (10 %), `--border-strong` (20 %). Strong edges are reserved for meaning:
+  `--border-highlight` (gold: active, current, key CTA), `--border-success`,
+  `--border-boss`, `--border-data`.
+- Cards separate by tone and light: `--bg-card` / `--bg-card-raised`
+  gradients plus `--card-shadow` (inner top light, soft drop shadow).
+- Page atmosphere: `--bg-atmosphere` (faint cool light from above, a warm
+  floor, a vignette) and `--bg-grain` (static SVG noise at 6 %, never
+  animated), fixed behind every screen. Ascend and Boss add their own art.
+- Primary button, "illuminated gold": `#c48a3a → #8a5a1c → #6a4212 → #4a2d0c`
+  with a firelit top edge, gold border and `#fff3d6` text (≥ 6.6:1 where the
+  label sits). Glow only on hover/focus.
+
 ## 3. Typography
 
 | Role | Face | Used for |
 |---|---|---|
 | Product | **Barlow** (400–700) | Body, forms, descriptions |
 | Product condensed | **Barlow Semi Condensed** (500–700) | Headings, labels, navigation, buttons, **every metric** |
-| Fantasy display | **Cinzel** (600–700) | Wordmark, Boss names, "Initialized.", "Initializing." — nothing else |
+| Fantasy display | **Cinzel** (600–700) | ASCEND identity, Boss names, the Ascend title and objective, Boss nodes, the Today greeting, "Initialized." / "Initializing." |
 
 Chosen because both Barlow cuts ship **tabular figures** (`tnum`); Chakra
 Petch, Rajdhani and Oxanium were checked and do not. Cinzel is never used for
@@ -140,16 +156,29 @@ Micro 11, Metric 40–52, Timer 64–96. Inputs are ≥ 16 px (no iOS zoom).
 | PixelArtFrame | `components/art/PixelArtFrame.tsx` | Notched sprite frame |
 | Artwork (ArtworkCard slot) | `components/art/Artwork.tsx` | Semantic art slot, fallback mood, reserved size |
 
-`/design`, `/design/boss`, `/design/workout` show every state. They are
-**visual review only**, enabled under `next dev` or with
-`ASCEND_DESIGN_GALLERY=1`, and 404 otherwise.
+Screen compositions live in `features/screens/` (TodayScreen, QuestsScreen,
+AscendScreen, BossScreen, WorkoutScreen) and are shared by the product routes
+(real data) and the review samples (sample data from
+`features/screens/samples.ts`, imported by nothing else).
+
+Review tooling — **visual review only**, enabled under `next dev` or with
+`ASCEND_DESIGN_GALLERY=1`, 404 otherwise, and behind sign-in:
+- `/design` — every component state
+- `/design/sample/{today,quests,ascend,stats,boss,workout}` — full sample screens
+- `/design/review` — the six screens in 390 × 844 phone frames side by side
+  (same-origin iframes; only `/design/sample/*` may be framed, `SAMEORIGIN`)
+- `scripts/capture-review.mjs` — screenshots + `docs/design/review-v2/composite.png`
 
 ## 6. Statuses
+
+Ordinary statuses are compact and quiet (22 px, 11 px text, 35 % edge, no
+fill). Events are loud on purpose: New Peak (filled gold, glow), Recoil
+(filled orange), Revenge (red→gold fill, glow).
 
 | Status | Rune | Tone | Border |
 |---|---|---|---|
 | Unranked | dormant diamond | muted blue-gray | dashed, no fill — **never 0** |
-| Provisional | hourglass | gold | solid, soft fill |
+| Provisional | hourglass | gold | faint edge, no fill |
 | Verified | shield-check | teal | solid |
 | Peak | crown | gold-bright | solid |
 | New Peak | crown | gold-bright | brief gold pulse (2 × 480 ms) |
@@ -160,7 +189,23 @@ Micro 11, Metric 40–52, Timer 64–96. Inputs are ≥ 16 px (no iOS zoom).
 
 ## 7. Iconography
 
-`components/ui/pixel-icons.ts`: 23 hand-drawn 16×16 pixel icons in three
+**Detailed icons (pass 2):** `scripts/generate-pixel-icons.mjs` draws 20 icons
+as vector layers (base, dark detail, light) and rasterises them onto a
+**24×24** grid (**32×32** for the brand mark), then shades them like
+hand-made pixel art: 1 px outline, top-left soft light, bottom-right shade,
+explicit glints. Output: `components/ui/pixel-icons-hd.ts` (generated).
+Tones derive from the icon colour at the use site (`--pixel-outline`,
+`--pixel-shade`, `--pixel-light`, `--pixel-glint`). `PixelIcon` uses the
+24-grid sprite at ≥ 20 px (1:1 at 24 px) and falls back to the 16-grid set
+below that, where detail would turn to mush (status badges).
+
+**Brand mark:** `ascend-mark`, a 32×32 ancient gate — pointed arch, keystone,
+dressed stone, and light rising through the doorway as stacked chevrons.
+Upward, not a mountain. Used on sign-in/sign-up, the Ascend nav plate, and
+nowhere else. There is no official tagline; "There is always another
+summit." appears only in page metadata.
+
+`components/ui/pixel-icons.ts`: the original 23 16×16 pixel icons in three
 tones (`o` outline = currentColor, `f` fill = 42 %, `h` highlight =
 `--pixel-highlight`, cream). Symmetric icons are drawn as halves and mirrored.
 Rendered by `PixelIcon` as one path per tone with `crispEdges`.
@@ -177,10 +222,10 @@ Utility controls (chevrons, play/pause, close, edit, alert) stay vector in
 
 ```
 apps/web/public/art/
-  world/    dusk-ruins.png, spawn-origin.png
-  paths/    ascend-map.png
-  bosses/   guardian-dormant.png
-  quests/   training-grounds.png, campfire.png, shrine.png
+  world/    dusk-ruins.png (192×96), spawn-origin.png (192×96)
+  paths/    ascend-map.png (195×440 — exactly 2× at 390 px)
+  bosses/   guardian-dormant.png (195×220 — 2× at 390 px)
+  quests/   training-grounds, campfire, shrine, road, arena (72×48)
   states/   sealed-gate.png, quiet-camp.png
 ```
 
@@ -191,8 +236,12 @@ apps/web/public/art/
 - **All current art is placeholder** (`status: "placeholder"`), generated by
   `npm run art -w @ascend/web` (`scripts/generate-art.mjs`): original,
   procedural, seeded and deterministic. No stock or copyrighted art.
-- Files are stored at native pixel size (48–200 px, 0.3–1.5 KB each) and
-  scaled by the browser with `image-rendering: pixelated`.
+- Files are stored at native pixel size and scaled by the browser with
+  `image-rendering: pixelated`. Pass 2 authors the Ascend map, the guardian
+  and the Quest scenes as SVG (shapes, gradients, light) rasterised at native
+  size with crisp edges and palette dithering — richer placeholders for the
+  same engineering time. The route is shared with the UI (`lib/ascend-route.ts`),
+  so nodes always sit on the trail and the lit route is drawn over the art.
 - Every slot reserves its aspect ratio (no layout shift), shows a mood
   gradient while loading or if the file is missing, and is decorative
   (`alt=""`; meaning lives in the text).
@@ -227,7 +276,7 @@ breathing, New Peak pulse. `prefers-reduced-motion` stops them all.
 
 ## 12. Performance
 
-- All placeholder art together is < 8 KB; heroes load eagerly, everything else
+- All placeholder art together is ≈ 37 KB; heroes load eagerly, everything else
   lazily; Boss art is only requested on Boss surfaces.
 - Pixel icons are inline SVG (3 paths each), no icon font or sprite request.
 - Three font families, subset to Latin, self-hosted.
