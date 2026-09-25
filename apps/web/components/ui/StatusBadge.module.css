@@ -1,0 +1,31 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1.5px solid currentColor;
+  font-size: var(--text-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.unranked {
+  border-style: dotted;
+  color: var(--color-ink-muted);
+}
+
+.provisional {
+  border-style: dashed;
+  color: var(--color-warning);
+}
+
+.verified {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: var(--color-on-brand);
+}

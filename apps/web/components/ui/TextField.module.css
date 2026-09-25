@@ -1,0 +1,63 @@
+/* Spec §26 forms: >=48px inputs, >=16px font (no iOS zoom), visible labels. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  font-weight: 620;
+  font-size: 0.9375rem;
+}
+
+.hint {
+  color: var(--color-ink-muted);
+  font-size: var(--text-meta-size);
+  margin-top: calc(var(--space-1) * -1);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  min-height: var(--input-height);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.control:focus-within {
+  border-color: var(--color-brand);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.invalid {
+  border-color: var(--color-danger);
+  border-width: 2px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: calc(var(--input-height) - 2px);
+  padding: 0 var(--space-4);
+  border: 0;
+  background: transparent;
+  font-size: max(16px, 1rem);
+  outline: none;
+}
+
+.unit {
+  padding-right: var(--space-4);
+  color: var(--color-ink-muted);
+  font-weight: 600;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-meta-size);
+  font-weight: 600;
+}

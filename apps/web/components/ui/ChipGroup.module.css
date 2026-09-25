@@ -1,0 +1,77 @@
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-weight: 620;
+  font-size: 0.9375rem;
+}
+
+.hint {
+  margin-bottom: var(--space-3);
+  color: var(--color-ink-muted);
+  font-size: var(--text-meta-size);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  font-weight: 560;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.chip span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.selected {
+  border: 2px solid var(--color-brand-strong);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  font-weight: 680;
+  /* Keep outer size stable when the border thickens. */
+  padding: calc(var(--space-2) - 1px) calc(var(--space-4) - 1px);
+}
+
+.check {
+  flex: none;
+  stroke-width: 2.5;
+}
+
+/* Native input stays in the accessibility tree and receives focus. */
+.input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.chip:has(.input:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

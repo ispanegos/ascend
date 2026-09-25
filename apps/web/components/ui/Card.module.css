@@ -1,0 +1,19 @@
+/* Spec §32. No nested cards on mobile (§31). */
+
+.card {
+  min-width: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.raised {
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+.subtle {
+  background: var(--color-surface-subtle);
+  border-color: transparent;
+}
