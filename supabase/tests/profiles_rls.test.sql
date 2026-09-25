@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 -- Fixtures: two athletes. The trigger creates their profiles.
 insert into auth.users (id, email, raw_user_meta_data)
@@ -21,10 +21,20 @@ select is(
 );
 
 -- Trigger
+-- Counts are scoped to the fixtures: other local users (e.g. from E2E runs)
+-- may exist in the database.
 select is(
-  (select count(*)::int from public.profiles),
+  (select count(*)::int from public.profiles
+   where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')),
   2,
   'a profile is created for every new auth user'
+);
+select is(
+  (select count(*)::int from public.athlete_settings
+   where athlete_id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')
+     and spawn_state = 'NOT_STARTED'),
+  2,
+  'athlete settings start at Spawn state NOT_STARTED'
 );
 select is(
   (select display_name from public.profiles where id = '11111111-1111-1111-1111-111111111111'),
@@ -122,7 +132,8 @@ select is(
   'an athlete cannot update another athlete''s profile'
 );
 select is(
-  (select count(*)::int from public.profiles),
+  (select count(*)::int from public.profiles
+   where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')),
   2,
   'no profile was deleted'
 );
