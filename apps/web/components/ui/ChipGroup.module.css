@@ -8,13 +8,13 @@
 .legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 620;
+  font-weight: 600;
   font-size: 0.9375rem;
 }
 
 .hint {
   margin-bottom: var(--space-3);
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
 }
 
@@ -50,7 +50,7 @@
 
 .error {
   margin-top: var(--space-2);
-  color: var(--color-danger);
+  color: var(--accent-danger-text);
   font-size: var(--text-meta-size);
   font-weight: 600;
 }
@@ -63,10 +63,10 @@
   max-width: 100%;
   min-height: var(--touch-min);
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-raised);
-  font-weight: 560;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  font-weight: 500;
   cursor: pointer;
   user-select: none;
   transition:
@@ -80,10 +80,10 @@
 }
 
 .selected {
-  border: 2px solid var(--color-brand-strong);
-  background: var(--color-brand-soft);
-  color: var(--color-brand-strong);
-  font-weight: 680;
+  border: 2px solid var(--accent-primary-bright);
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary-bright);
+  font-weight: 700;
   /* Keep outer size stable when the border thickens. */
   padding: calc(var(--space-2) - 1px) calc(var(--space-4) - 1px);
 }
@@ -103,6 +103,6 @@
 }
 
 .chip:has(.input:focus-visible) {
-  outline: 3px solid var(--color-focus);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }

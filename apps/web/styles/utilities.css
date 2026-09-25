@@ -1,29 +1,45 @@
 /*
- * Shared utility classes — spec §29 (type scale), §30 (.app-page),
- * §31 (layout), §37 (boss hero).
+ * Shared utilities — Design System V2 type scale and layout.
  */
 
-/* Typography */
+/* ---------------------------------------------------------------- Type */
+
+/* Product display: condensed sans, used for screen heroes. */
+.text-display-xl,
+.text-display,
+.text-h1,
+.text-h2,
+.text-h3 {
+  font-family: var(--font-product-condensed);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.text-display-xl {
+  font-size: var(--text-display-xl-size);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
 
 .text-display {
   font-size: var(--text-display-size);
-  line-height: 0.92;
-  letter-spacing: -0.055em;
-  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.005em;
 }
 
 .text-h1 {
   font-size: var(--text-h1-size);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  font-weight: 650;
+  line-height: 1.1;
 }
 
 .text-h2 {
   font-size: var(--text-h2-size);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  font-weight: 620;
+  line-height: 1.15;
+}
+
+.text-h3 {
+  font-size: var(--text-h3-size);
+  line-height: 1.25;
 }
 
 .text-body {
@@ -31,30 +47,64 @@
   line-height: 1.5;
 }
 
+.text-small {
+  font-size: var(--text-small-size);
+  line-height: 1.45;
+}
+
 .text-meta {
   font-size: var(--text-meta-size);
   line-height: 1.35;
-  letter-spacing: 0.02em;
 }
 
-/* Uppercase game-system labels (BOSS, UNRANKED, CURRENT) — never paragraphs. */
+/* Uppercase system labels (BOSS, UNRANKED, CURRENT) — never paragraphs. */
 .text-label {
+  font-family: var(--font-product-condensed);
   font-size: var(--text-label-size);
   line-height: 1.2;
-  letter-spacing: 0.08em;
-  font-weight: 650;
+  letter-spacing: 0.12em;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
+.text-micro {
+  font-size: var(--text-micro-size);
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+
+/* Fantasy display: wordmark, Boss names, rare milestone titles. Never data. */
+.text-fantasy {
+  font-family: var(--font-fantasy);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-display);
+}
+
 .text-muted {
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
 }
 
+.text-faint {
+  color: var(--text-muted);
+}
+
+.text-gold {
+  color: var(--accent-primary);
+}
+
+.text-data {
+  color: var(--accent-data);
+}
+
+/* Every measured number: condensed and tabular so columns never jitter. */
 .stat-number {
+  font-family: var(--font-product-condensed);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
-/* Accessibility */
+/* ------------------------------------------------------- Accessibility */
 
 .visually-hidden {
   position: absolute !important;
@@ -74,10 +124,10 @@
   top: calc(env(safe-area-inset-top) + var(--space-2));
   left: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-pill);
-  background: var(--color-brand);
-  color: var(--color-on-brand);
-  font-weight: 650;
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  font-weight: 700;
   transform: translateY(-200%);
 }
 
@@ -85,16 +135,15 @@
   transform: none;
 }
 
-/* Layout */
+/* -------------------------------------------------------------- Layout */
 
+/* One phone-width column, centred on larger screens (V2 §26). */
 .app-page {
-  width: min(100%, var(--page-max));
+  width: min(100%, var(--content-max));
   margin-inline: auto;
-  padding-inline: var(--mobile-gutter);
-  padding-top: calc(env(safe-area-inset-top) + var(--space-6));
-  padding-bottom: calc(
-    var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px
-  );
+  padding-inline: max(var(--mobile-gutter), env(safe-area-inset-left)) max(var(--mobile-gutter), env(safe-area-inset-right));
+  padding-top: calc(env(safe-area-inset-top) + var(--space-4));
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-8));
 }
 
 /* Focused flows (auth, Spawn) have no bottom nav. */
@@ -111,38 +160,18 @@
   gap: var(--space-4);
 }
 
-.stack--lg {
-  gap: var(--space-8);
+.stack--sm {
+  gap: var(--space-2);
 }
 
-.dashboard-grid {
-  display: grid;
-  gap: var(--space-4);
-  grid-template-columns: minmax(0, 1fr);
+.stack--lg {
+  gap: var(--space-6);
 }
 
 @media (min-width: 768px) {
   .app-page {
     padding-inline: var(--desktop-gutter);
   }
-
-  .dashboard-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1100px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-}
-
-/* Boss — spec §37: the product's one dramatic inversion. */
-.boss-hero {
-  background: var(--color-boss-bg);
-  color: var(--color-boss-ink);
-  border-radius: var(--radius-xl);
-  padding: clamp(20px, 6vw, 36px);
 }
 
 /* Focused flows render a sticky FlowHeader that carries the safe-area inset. */
@@ -152,6 +181,8 @@
 
 /* Shell during Spawn/Calibration: no bottom nav, one way back (ADR-023 §9). */
 .locked-shell {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
   padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--mobile-gutter) 0;
 }
 
@@ -161,8 +192,8 @@
   gap: var(--space-1);
   min-height: var(--touch-min);
   padding-right: var(--space-3);
-  color: var(--color-ink);
-  font-weight: 620;
+  color: var(--text-primary);
+  font-weight: 600;
   text-decoration: none;
 }
 

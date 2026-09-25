@@ -1,5 +1,6 @@
 /*
- * Global baseline — spec §30, §39 (reduced motion), §41 (dvh, safe areas).
+ * Global baseline — Design System V2. Dark, phone first, 100dvh, safe areas,
+ * reduced motion and forced colours respected.
  */
 
 *,
@@ -10,7 +11,7 @@
 
 html {
   min-width: 320px;
-  background: var(--color-bg);
+  background: var(--bg-deep);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -19,21 +20,31 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(37, 199, 232, 0.06), transparent 60%),
+    var(--bg-app);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-product);
   font-size: var(--text-body-size);
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  /* Spec §0.7: no horizontal scrolling in normal application screens. */
+  -moz-osx-font-smoothing: grayscale;
+  /* No horizontal scrolling in normal application screens. */
   overflow-x: clip;
 }
 
 h1,
 h2,
 h3,
-h4,
+h4 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-product-condensed);
+  font-weight: 600;
+}
+
 p {
   margin: 0;
   overflow-wrap: anywhere;
@@ -47,6 +58,13 @@ select {
   color: inherit;
 }
 
+/* Inputs stay ≥ 16px so iOS never zooms. */
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 button,
 a,
 [role="button"] {
@@ -58,7 +76,7 @@ button {
 }
 
 a {
-  color: var(--color-brand);
+  color: var(--accent-primary);
 }
 
 img,
@@ -69,13 +87,13 @@ canvas {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: var(--color-brand-soft);
-  color: var(--color-ink-strong);
+  background: var(--accent-primary-soft);
+  color: var(--text-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -86,5 +104,15 @@ canvas {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Higher contrast on request: brighter secondary text and firmer lines. */
+@media (prefers-contrast: more) {
+  :root {
+    --text-secondary: var(--text-primary);
+    --text-muted: var(--ascend-text-secondary);
+    --border-default: var(--ascend-border);
+    --border-strong: var(--ascend-text-muted);
   }
 }

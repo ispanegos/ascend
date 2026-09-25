@@ -7,12 +7,8 @@
   gap: var(--space-3);
   margin-top: auto;
   margin-inline: calc(var(--mobile-gutter) * -1);
-  padding: 12px var(--mobile-gutter) calc(12px + env(safe-area-inset-bottom));
-  background: linear-gradient(
-    to top,
-    var(--color-bg) 72%,
-    color-mix(in srgb, var(--color-bg) 0%, transparent)
-  );
+  padding: var(--space-4) var(--mobile-gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg-app) 70%, color-mix(in srgb, var(--bg-app) 0%, transparent));
 }
 
 @media (min-width: 768px) {

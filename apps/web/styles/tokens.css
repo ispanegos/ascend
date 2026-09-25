@@ -1,62 +1,161 @@
 /*
- * ASCEND design tokens — spec §28 (palette, radius, spacing, shadows, motion,
- * layout) and §29 (typography).
+ * ASCEND Design System V2 — tokens (docs/DESIGN_SYSTEM_V2.md, ADR-037).
  *
- * Components consume these semantic tokens only; never raw hex values.
+ * Two layers:
+ *   1. Palette primitives (--ascend-*): the raw V2 colours. Only this file
+ *      references them.
+ *   2. Semantic tokens: what components use. Never raw hex in a component.
+ *
+ * Dark only. V2 supersedes the cream/minimal system of spec §28.
  */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Surfaces */
-  --color-bg: #f4f1e8;
-  --color-surface: #faf8f2;
-  --color-surface-raised: #ffffff;
-  --color-surface-subtle: #ece9df;
+  /* ------------------------------------------------------------------
+   * 1. Palette primitives
+   * ------------------------------------------------------------------ */
+  --ascend-bg-deep: #07141b;
+  --ascend-bg: #091922;
+  --ascend-surface-1: #0d202a;
+  --ascend-surface-2: #112934;
+  --ascend-surface-3: #16333e;
 
-  /* Ink */
-  --color-ink: #10251d;
-  --color-ink-strong: #081712;
-  /* Tuned from spec #66736C for AA on all light surfaces (ADR-009). */
-  --color-ink-muted: #5c6862;
-  /* Decorative/disabled only: below AA contrast for body text. */
-  --color-ink-faint: #929b95;
+  --ascend-border: #29424c;
+  --ascend-border-soft: rgba(140, 175, 185, 0.16);
 
-  /* Brand */
-  --color-brand: #173e30;
-  --color-brand-strong: #0e2c22;
-  --color-brand-soft: #dde8e1;
-  --color-on-brand: #ffffff;
+  --ascend-text: #f3efe4;
+  --ascend-text-secondary: #a8b7bc;
+  /* Tuned from #71868e (3.5–4.4:1 on surfaces) to pass AA on every surface. */
+  --ascend-text-muted: #8a9da4;
+  /* The original muted value: decorative and disabled only. */
+  --ascend-text-faint: #71868e;
 
-  /* Functional */
-  --color-success: #2f684d;
-  /* Tuned from spec #9A6B25 for AA text contrast (ADR-009). */
-  --color-warning: #855d20;
-  --color-danger: #a6463c;
-  --color-info: #486b75;
+  --ascend-gold: #f3b24f;
+  --ascend-gold-bright: #ffd47a;
+  --ascend-gold-dark: #a96b20;
+  --ascend-amber-deep: #3a2710;
+  --ascend-amber-deeper: #221708;
 
-  /* Boss surfaces */
-  --color-boss-bg: #10231c;
-  --color-boss-surface: #173128;
-  --color-boss-ink: #f6f3ea;
-  --color-boss-muted: #aab9b1;
+  --ascend-cyan: #25c7e8;
+  --ascend-teal: #19c6b4;
+  --ascend-green: #54d899;
+
+  --ascend-orange: #ef7b3b;
+  --ascend-red: #ef4b45;
+  /* Red as text: #ef4b45 falls below AA on raised surfaces. */
+  --ascend-red-text: #ff6b63;
+
+  --ascend-boss-bg: #211116;
+  --ascend-boss-surface: #2c161c;
+  --ascend-boss-red: #c94136;
+  --ascend-boss-orange: #f07845;
+
+  --ascend-cream: #f2e3c2;
+  --ascend-ink-on-gold: #1a1206;
+
+  /* ------------------------------------------------------------------
+   * 2. Semantic tokens
+   * ------------------------------------------------------------------ */
+
+  /* Backgrounds */
+  --bg-app: var(--ascend-bg);
+  --bg-deep: var(--ascend-bg-deep);
+  --bg-surface: var(--ascend-surface-1);
+  --bg-elevated: var(--ascend-surface-2);
+  --bg-sunken: var(--ascend-bg-deep);
+  --bg-hover: var(--ascend-surface-3);
+  --bg-card: linear-gradient(180deg, rgba(18, 42, 52, 0.96), rgba(9, 27, 35, 0.98));
+  --bg-card-solid: var(--ascend-surface-1);
+  --bg-track: rgba(140, 175, 185, 0.14);
+
+  /* Text */
+  --text-primary: var(--ascend-text);
+  --text-strong: #ffffff;
+  --text-secondary: var(--ascend-text-secondary);
+  --text-muted: var(--ascend-text-muted);
+  --text-faint: var(--ascend-text-faint);
+  --text-display: var(--ascend-cream);
+  --text-on-accent: var(--ascend-ink-on-gold);
+
+  /* Accents — meaning, not decoration (Design System V2 §6) */
+  --accent-primary: var(--ascend-gold);
+  --accent-primary-bright: var(--ascend-gold-bright);
+  --accent-primary-dark: var(--ascend-gold-dark);
+  --accent-primary-soft: rgba(243, 178, 79, 0.14);
+  --accent-data: var(--ascend-cyan);
+  --accent-data-soft: rgba(37, 199, 232, 0.14);
+  --accent-success: var(--ascend-green);
+  --accent-verified: var(--ascend-teal);
+  --accent-success-soft: rgba(84, 216, 153, 0.14);
+  --accent-warning: var(--ascend-orange);
+  --accent-danger: var(--ascend-red);
+  --accent-danger-text: var(--ascend-red-text);
+  --accent-danger-soft: rgba(239, 75, 69, 0.14);
+
+  /* Status (never colour alone: each also has an icon and a word) */
+  --status-unranked: var(--ascend-text-muted);
+  --status-provisional: var(--ascend-gold);
+  --status-verified: var(--ascend-teal);
+  --status-peak: var(--ascend-gold-bright);
+  --status-recoil: var(--ascend-orange);
+
+  /* Boss */
+  --boss-bg: var(--ascend-boss-bg);
+  --boss-surface: var(--ascend-boss-surface);
+  --boss-accent: var(--ascend-boss-red);
+  --boss-accent-bright: var(--ascend-boss-orange);
+  --boss-text: var(--ascend-text);
+  --boss-text-muted: #c4b3b3;
+  --boss-name: var(--ascend-cream);
 
   /* Lines */
-  --color-border: rgba(16, 37, 29, 0.12);
-  --color-border-strong: rgba(16, 37, 29, 0.22);
+  --border-default: var(--ascend-border-soft);
+  --border-strong: var(--ascend-border);
+  --border-highlight: rgba(243, 178, 79, 0.65);
+  --border-boss: rgba(239, 75, 69, 0.5);
+  --border-data: rgba(37, 199, 232, 0.45);
+  --border-success: rgba(84, 216, 153, 0.5);
 
   /* Overlays */
-  --color-scrim: rgba(8, 23, 18, 0.36);
+  --scrim: rgba(3, 9, 12, 0.72);
 
-  /* Focus */
-  --color-focus: color-mix(in srgb, var(--color-brand), white 35%);
+  /* Focus: gold ring, visible on every surface */
+  --focus-ring: var(--ascend-gold-bright);
 
-  /* Radius */
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  /* Buttons */
+  --button-primary-bg: linear-gradient(180deg, #4a3214 0%, var(--ascend-amber-deep) 55%, var(--ascend-amber-deeper) 100%);
+  --button-primary-bg-hover: linear-gradient(180deg, #5a3d18 0%, #45301a 55%, #2a1c0a 100%);
+  --button-primary-border: var(--ascend-gold);
+  --button-primary-text: var(--ascend-cream);
+  --button-primary-highlight: inset 0 1px 0 rgba(255, 212, 122, 0.28);
+  --button-boss-bg: linear-gradient(180deg, #4a1a18 0%, #2e1013 100%);
+  --button-success-bg: linear-gradient(180deg, #123a30 0%, #0c2a23 100%);
+
+  /* Artwork fallbacks: shown while art loads or if a file is missing */
+  --art-fallback-dusk: linear-gradient(180deg, var(--ascend-bg-deep) 0%, #2a2338 45%, #5a2f3a 75%, #9a4a36 100%);
+  --art-fallback-origin: radial-gradient(60% 70% at 50% 70%, rgba(37, 199, 232, 0.18), transparent 70%), var(--ascend-bg-deep);
+  --art-fallback-forest: linear-gradient(180deg, #2a2338 0%, var(--ascend-surface-2) 30%, #0c2226 100%);
+  --art-fallback-boss: radial-gradient(50% 45% at 50% 35%, rgba(201, 65, 54, 0.45), transparent 70%), var(--ascend-boss-bg);
+  --art-fallback-night: linear-gradient(180deg, var(--ascend-bg-deep), var(--ascend-surface-2));
+
+  /* Attribute identity hues: recognition only, never status (V2 §10) */
+  --attr-endurance: #5fd4ee;
+  --attr-strength: var(--ascend-gold);
+  --attr-power: var(--ascend-gold-bright);
+  --attr-core: #ea9a5b;
+  --attr-mobility: #8ad0dc;
+  --attr-agility: #b8e07a;
+  --attr-recovery: #b7a4f2;
+  --attr-overall: var(--ascend-cream);
+
+  /* ------------------------------------------------------------------
+   * Radius — slightly architectural, never bubbly
+   * ------------------------------------------------------------------ */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
 
   /* Spacing — 4px base */
@@ -71,36 +170,59 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Shadows — restrained */
-  --shadow-sm: 0 1px 2px rgba(8, 23, 18, 0.06);
-  --shadow-md: 0 8px 28px rgba(8, 23, 18, 0.08);
-  --shadow-sheet: 0 -12px 40px rgba(8, 23, 18, 0.12);
+  /* Elevation: tonal separation first, shadow only for overlays */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-sheet: 0 -16px 48px rgba(0, 0, 0, 0.55);
+  /* Glow is reserved: selected, active, newly unlocked, Boss, key CTA */
+  --glow-primary: 0 0 0 1px rgba(243, 178, 79, 0.35), 0 0 22px rgba(243, 178, 79, 0.22);
+  --glow-boss: 0 0 0 1px rgba(239, 75, 69, 0.35), 0 0 26px rgba(201, 65, 54, 0.3);
+  --glow-data: 0 0 18px rgba(37, 199, 232, 0.25);
 
   /* Motion */
   --duration-fast: 140ms;
-  --duration-normal: 220ms;
+  --duration-normal: 200ms;
   --duration-slow: 360ms;
+  --duration-moment: 480ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Layout */
-  --page-max: 1180px;
+  /* Layout — phone first; desktop centres a phone-width column */
+  --content-max: 560px;
+  --content-max-wide: 720px;
   --mobile-gutter: 16px;
-  --desktop-gutter: 32px;
-  --bottom-nav-height: 64px;
+  --dense-gutter: 12px;
+  --desktop-gutter: 24px;
+  --bottom-nav-height: 68px;
+  --top-bar-height: 56px;
 
-  /* Touch targets — spec §26 */
+  /* Touch targets */
   --touch-min: 44px;
+  --touch-comfort: 48px;
   --control-height: 52px;
-  --input-height: 48px;
+  --input-height: 52px;
 
-  /* Typography — spec §29. --font-inter is set by next/font. */
-  --font-sans:
-    var(--font-inter, Inter), ui-sans-serif, -apple-system, BlinkMacSystemFont,
-    "SF Pro Text", "Segoe UI", sans-serif;
-  --text-display-size: clamp(2.25rem, 9vw, 4.75rem);
-  --text-h1-size: clamp(1.8rem, 7vw, 3rem);
-  --text-h2-size: clamp(1.35rem, 5vw, 2rem);
+  /* ------------------------------------------------------------------
+   * Typography — product (Barlow) + fantasy display (Cinzel)
+   * --font-barlow*, --font-cinzel are set by next/font.
+   * ------------------------------------------------------------------ */
+  --font-product:
+    var(--font-barlow, Barlow), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-product-condensed:
+    var(--font-barlow-condensed, "Barlow Semi Condensed"), var(--font-barlow, Barlow), ui-sans-serif,
+    -apple-system, sans-serif;
+  --font-fantasy: var(--font-cinzel, Cinzel), "Trajan Pro", Georgia, serif;
+
+  --text-display-xl-size: clamp(2.5rem, 11vw, 3rem);
+  --text-display-size: clamp(2rem, 9vw, 2.25rem);
+  --text-h1-size: clamp(1.75rem, 7.5vw, 2rem);
+  --text-h2-size: clamp(1.375rem, 6vw, 1.5rem);
+  --text-h3-size: 1.125rem;
   --text-body-size: 1rem;
+  --text-small-size: 0.875rem;
   --text-meta-size: 0.8125rem;
   --text-label-size: 0.75rem;
+  --text-micro-size: 0.6875rem;
+  --text-metric-size: clamp(2.5rem, 12vw, 3.25rem);
+  --text-timer-size: clamp(4rem, 22vw, 6rem);
 }

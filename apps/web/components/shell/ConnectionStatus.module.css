@@ -15,9 +15,10 @@
   gap: var(--space-2);
   max-width: 100%;
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-pill);
-  background: var(--color-ink-strong);
-  color: var(--color-boss-ink);
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   font-size: var(--text-meta-size);
   font-weight: 600;
   box-shadow: var(--shadow-md);

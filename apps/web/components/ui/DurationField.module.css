@@ -11,13 +11,13 @@
 .label {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 620;
+  font-weight: 600;
   font-size: 0.9375rem;
 }
 
 .hint {
   margin-top: calc(var(--space-2) * -1);
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
 }
 
@@ -32,19 +32,19 @@
   align-items: center;
   min-width: 0;
   min-height: var(--input-height);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border-strong);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
 
 .box:focus-within {
-  border-color: var(--color-brand);
-  outline: 3px solid var(--color-focus);
+  border-color: var(--accent-primary);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
 .invalid {
-  border: 2px solid var(--color-danger);
+  border: 2px solid var(--accent-danger-text);
 }
 
 .input {
@@ -62,13 +62,13 @@
 .unit {
   flex: none;
   padding-right: var(--space-3);
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .error {
-  color: var(--color-danger);
+  color: var(--accent-danger-text);
   font-size: var(--text-meta-size);
   font-weight: 600;
 }

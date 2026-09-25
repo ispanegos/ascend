@@ -4,29 +4,32 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-6) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-raised);
+  border: 1px solid var(--border-data);
+  border-radius: var(--radius-md);
+  background: radial-gradient(80% 60% at 50% 30%, var(--accent-data-soft), transparent 70%), var(--bg-card);
 }
 
 .display {
-  font-size: clamp(3.5rem, 20vw, 6rem);
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-timer-size);
   line-height: 1;
-  font-weight: 650;
-  letter-spacing: -0.04em;
-  color: var(--color-ink-strong);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  text-shadow: 0 0 24px rgba(37, 199, 232, 0.25);
 }
 
 .done {
-  color: var(--color-success);
+  color: var(--accent-success);
 }
 
 .caption {
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
+  font-family: var(--font-product-condensed);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
 }
 
 .checkpoints {
@@ -43,24 +46,24 @@
   display: grid;
   place-items: center;
   min-height: var(--touch-min);
-  border: 1px dashed var(--color-border-strong);
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius-sm);
-  color: var(--color-ink-muted);
-  font-weight: 620;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .reached {
   border-style: solid;
-  border-color: var(--color-brand);
-  color: var(--color-brand-strong);
-  background: var(--color-brand-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary-bright);
+  background: var(--accent-primary-soft);
 }
 
 .current {
   border-style: solid;
   border-width: 2px;
-  border-color: var(--color-ink);
-  color: var(--color-ink);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .controls {

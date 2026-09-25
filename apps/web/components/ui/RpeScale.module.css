@@ -8,13 +8,13 @@
 .label {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 620;
+  font-weight: 600;
   font-size: 0.9375rem;
 }
 
 .hint {
   margin-bottom: var(--space-3);
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
 }
 
@@ -29,18 +29,18 @@
   display: grid;
   place-items: center;
   min-height: var(--touch-min);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  font-weight: 620;
+  background: var(--bg-elevated);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 
 .selected {
-  border: 2px solid var(--color-brand-strong);
-  background: var(--color-brand);
-  color: var(--color-on-brand);
+  border: 2px solid var(--accent-primary-bright);
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
   font-weight: 700;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .cell:has(.input:focus-visible) {
-  outline: 3px solid var(--color-focus);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -61,13 +61,13 @@
   display: flex;
   justify-content: space-between;
   margin-top: var(--space-2);
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-label-size);
 }
 
 .error {
   margin-top: var(--space-2);
-  color: var(--color-danger);
+  color: var(--accent-danger-text);
   font-size: var(--text-meta-size);
   font-weight: 600;
 }
