@@ -24,11 +24,13 @@ export interface ArtAsset {
 export const ART = {
   "world.dusk-ruins": { src: "/art/world/dusk-ruins.png", width: 192, height: 96, mood: "dusk", focus: "60% 60%", status: "placeholder" },
   "world.spawn-origin": { src: "/art/world/spawn-origin.png", width: 192, height: 96, mood: "origin", focus: "50% 55%", status: "placeholder" },
-  "paths.ascend-map": { src: "/art/paths/ascend-map.png", width: 120, height: 200, mood: "forest", focus: "50% 50%", status: "placeholder" },
-  "bosses.guardian-dormant": { src: "/art/bosses/guardian-dormant.png", width: 96, height: 112, mood: "boss", focus: "50% 40%", status: "placeholder" },
-  "quests.training-grounds": { src: "/art/quests/training-grounds.png", width: 48, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
-  "quests.campfire": { src: "/art/quests/campfire.png", width: 48, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
-  "quests.shrine": { src: "/art/quests/shrine.png", width: 48, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
+  "paths.ascend-map": { src: "/art/paths/ascend-map.png", width: 195, height: 440, mood: "forest", focus: "50% 50%", status: "placeholder" },
+  "bosses.guardian-dormant": { src: "/art/bosses/guardian-dormant.png", width: 195, height: 220, mood: "boss", focus: "50% 35%", status: "placeholder" },
+  "quests.training-grounds": { src: "/art/quests/training-grounds.png", width: 72, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
+  "quests.campfire": { src: "/art/quests/campfire.png", width: 72, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
+  "quests.shrine": { src: "/art/quests/shrine.png", width: 72, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
+  "quests.road": { src: "/art/quests/road.png", width: 72, height: 48, mood: "dusk", focus: "50% 50%", status: "placeholder" },
+  "quests.arena": { src: "/art/quests/arena.png", width: 72, height: 48, mood: "boss", focus: "50% 50%", status: "placeholder" },
   "states.sealed-gate": { src: "/art/states/sealed-gate.png", width: 96, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
   "states.quiet-camp": { src: "/art/states/quiet-camp.png", width: 96, height: 48, mood: "night", focus: "50% 50%", status: "placeholder" },
 } as const satisfies Record<string, ArtAsset>;
