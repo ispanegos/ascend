@@ -10,9 +10,12 @@ import {
 } from "@ascend/shared";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Artwork } from "@/components/art/Artwork";
 import { FlowHeader } from "@/components/shell/FlowHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import { MobileActionBar } from "@/components/ui/MobileActionBar";
+import { PixelIcon } from "@/components/ui/PixelIcon";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AttributeLadder } from "@/features/spawn/components/AttributeLadder";
 import { SessionList } from "@/features/spawn/components/SessionList";
 import styles from "@/features/spawn/components/spawn.module.css";
@@ -51,7 +54,10 @@ export default async function SpawnPointPage() {
       <FlowHeader context="Spawn" />
       <main id="main" className={styles.page}>
         <header className={styles.hero}>
-          <p className="text-label text-muted">Spawn point</p>
+          <Artwork id="world.spawn-origin" ratio="2 / 1" priority scrim="bottom" className={styles.heroArt} />
+          <p className={`text-label ${styles.kicker}`}>
+            <PixelIcon name="ascend" size={16} /> Spawn point
+          </p>
           <h1 className="text-display">{started ? "Your baseline is forming." : "Every Stat starts unranked."}</h1>
           <p className={styles.lede}>
             Nothing is assumed. Each attribute stays unranked until ASCEND has measured it.
@@ -65,9 +71,7 @@ export default async function SpawnPointPage() {
         />
 
         <section aria-labelledby="sessions-heading" className={styles.block}>
-          <h2 id="sessions-heading" className="text-label text-muted">
-            Three sessions
-          </h2>
+          <SectionHeader id="sessions-heading" title="Three sessions" />
           <SessionList status={status} />
           <p className="text-muted">Sessions can be on different days. Rest between them is part of the process.</p>
         </section>

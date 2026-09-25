@@ -1,5 +1,6 @@
 "use client";
 
+import { Artwork } from "@/components/art/Artwork";
 import {
   BIOLOGICAL_SEX,
   BODY_CIRCUMFERENCES,
@@ -166,7 +167,8 @@ function Welcome() {
       <FlowHeader context="Spawn" />
       <main id="main" className={styles.main}>
         <header className={styles.welcome}>
-          <p className="text-label text-muted">Spawn</p>
+          <Artwork id="world.spawn-origin" ratio="2 / 1" priority scrim="bottom" className={styles.welcomeArt} />
+          <p className="text-label text-gold">Spawn · Origin</p>
           <h1 className="text-display">Create your athlete profile.</h1>
           <p className={styles.lede}>
             Before ASCEND measures anything, it needs context: your body, your equipment and when you can train.

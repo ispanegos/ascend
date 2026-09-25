@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
+import { Artwork } from "@/components/art/Artwork";
 import { Button } from "@/components/ui/Button";
 import { MobileActionBar } from "@/components/ui/MobileActionBar";
 import { initializeAthleteProfile } from "@/features/spawn/actions";
@@ -41,8 +42,9 @@ export function InitializeFlow({ retry = false, children }: { retry?: boolean; c
   if (pending) {
     return (
       <div className={styles.initializing} role="status" aria-live="polite">
-        <p className="text-label text-muted">ASCEND Engine 0.1</p>
-        <p className="text-display">Initializing.</p>
+        <Artwork id="world.spawn-origin" ratio="2 / 1" priority scrim="bottom" className={styles.initArt} />
+        <p className="text-label text-gold">Calibration · ASCEND Engine 0.1</p>
+        <p className={styles.initTitle}>Initializing.</p>
         <ol className={styles.pipeline}>
           {PIPELINE.map((step) => (
             <li key={step}>{step}</li>

@@ -21,6 +21,7 @@ import { notFound, redirect } from "next/navigation";
 import { FlowHeader } from "@/components/shell/FlowHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { PixelIcon, type PixelIconName } from "@/components/ui/PixelIcon";
 import { MobileActionBar } from "@/components/ui/MobileActionBar";
 import { completeSession } from "@/features/spawn/actions";
 import { ActionButton } from "@/features/spawn/components/ActionButton";
@@ -47,6 +48,9 @@ const TONE: Record<CoverageStatus, "collected" | "partial" | "muted"> = {
   partial: "partial",
   not_assessed: "muted",
 };
+
+/** Each session's rune (V2 §21): the attribute family it mostly measures. */
+const SESSION_RUNE: Record<SessionKind, PixelIconName> = { movement: "mobility", frame: "strength", engine: "endurance" };
 
 const PROGRESS_TEXT: Record<string, string> = {
   not_started: "To do",
@@ -99,7 +103,9 @@ function SessionOverview({ kind, view }: { kind: SessionKind; view: SessionView 
       />
       <main id="main" className={styles.page}>
         <header className={styles.hero}>
-          <p className="text-label text-muted">Spawn {SESSION_CATALOG[kind].number}</p>
+          <p className="text-label text-gold" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <PixelIcon name={SESSION_RUNE[kind]} size={16} /> Spawn {SESSION_CATALOG[kind].number}
+          </p>
           <h1 className="text-h1">{SESSION_CATALOG[kind].title}</h1>
           <p className="text-muted">
             {done
@@ -173,7 +179,9 @@ function SessionComplete({
       <FlowHeader backHref="/spawn" context={`Spawn ${SESSION_CATALOG[kind].number}`} />
       <main id="main" className={styles.page}>
         <header className={styles.hero}>
-          <p className="text-label text-muted">Spawn {SESSION_CATALOG[kind].number}</p>
+          <p className="text-label text-gold" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <PixelIcon name={SESSION_RUNE[kind]} size={16} /> Spawn {SESSION_CATALOG[kind].number}
+          </p>
           <h1 className="text-display">{SESSION_CATALOG[kind].title} complete</h1>
           <p className={styles.lede}>Raw results are stored exactly as you recorded them. No Stats are calculated yet.</p>
         </header>
@@ -201,7 +209,7 @@ function SessionComplete({
 
         {nextKind ? (
           <section className={styles.next} aria-label="Next session">
-            <p className="text-label text-muted">Next</p>
+            <p className="text-label text-gold">Next</p>
             <p className={styles.nextTitle}>{SESSION_CATALOG[nextKind].title}</p>
             <p className="text-muted">
               {SESSION_CATALOG[nextKind].estimate}. Start now or on another day — you&apos;ll come back here.
@@ -213,7 +221,7 @@ function SessionComplete({
           {nextKind ? (
             <>
               <ButtonLink href={sessionPath(nextKind)}>Continue to {SESSION_CATALOG[nextKind].title}</ButtonLink>
-              <ButtonLink href="/spawn" variant="ghost">
+              <ButtonLink href="/spawn" variant="secondary">
                 Later
               </ButtonLink>
             </>

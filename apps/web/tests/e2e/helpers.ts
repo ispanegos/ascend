@@ -4,12 +4,13 @@ export const AUTH_DIR = "tests/e2e/.auth";
 export const STORAGE_STATE = `${AUTH_DIR}/user.json`;
 export const CREDENTIALS = `${AUTH_DIR}/credentials.json`;
 
+/** Primary navigation, in order (Design System V2 §4). */
 export const DESTINATIONS = [
   { label: "Today", path: "/today" },
-  { label: "Stats", path: "/stats" },
+  { label: "Quests", path: "/quests" },
   { label: "Ascend", path: "/ascend" },
-  { label: "Bosses", path: "/bosses" },
-  { label: "Profile", path: "/profile" },
+  { label: "Stats", path: "/stats" },
+  { label: "You", path: "/profile" },
 ] as const;
 
 /**

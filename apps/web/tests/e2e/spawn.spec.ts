@@ -22,11 +22,15 @@ import {
 
 const SHOTS = process.env.SPAWN_SCREENSHOTS;
 
-/** Viewport screenshot for the report, after entrance animations settle. */
-async function shot(page: Page, name: string) {
-  if (!SHOTS || page.viewportSize()?.width !== 390) return;
+/**
+ * Viewport screenshot for visual review, after entrance animations settle.
+ * Written to `${SPAWN_SCREENSHOTS}/<width>/<name>.png` at 390 and 320 px.
+ */
+async function shot(page: Page, name: string, { fullPage = false } = {}) {
+  const width = page.viewportSize()?.width;
+  if (!SHOTS || (width !== 390 && width !== 320)) return;
   await page.waitForTimeout(800);
-  await page.screenshot({ path: `${SHOTS}/${name}.png` });
+  await page.screenshot({ path: `${SHOTS}/${width}/${name}.png`, fullPage });
 }
 
 test.describe("Spawn journey", () => {
@@ -36,6 +40,10 @@ test.describe("Spawn journey", () => {
   test("profile → Spawn Point → Movement → Frame → Engine → Spawn Complete, with resume", async ({ page, browser }, testInfo) => {
     // The design width, plus the narrowest supported width with real numbers on screen.
     test.skip(!["phone-390", "phone-320"].includes(testInfo.project.name), "full journey runs at 390 and 320 px");
+    if (SHOTS) {
+      await page.goto("/sign-in");
+      await shot(page, "00-sign-in");
+    }
     const credentials = await signUpFresh(page);
     await completeOnboarding(page);
 
@@ -48,6 +56,7 @@ test.describe("Spawn journey", () => {
     }
     await expect(page.locator("main")).not.toContainText(/\b\d{2}\s*(?:%|\/100)\b/);
     await shot(page, "01-spawn-point");
+    await shot(page, "01b-spawn-point-full", { fullPage: true });
     await page.getByRole("link", { name: "Begin assessment" }).click();
 
     // ---- Movement pre-flight
@@ -84,7 +93,7 @@ test.describe("Spawn journey", () => {
     await choose(page, "Depth", "Parallel");
     await choose(page, "Heels", "Grounded");
     await choose(page, "Control", "Stable");
-    await shot(page, "02-movement-record");
+    await shot(page, "02-movement-assessment");
     await saveAttempt(page, "Save attempt 3 of 3");
     await confirm(page, "No");
 
@@ -190,7 +199,7 @@ test.describe("Spawn journey", () => {
     await page.getByLabel("Clean reps").fill("10");
     await choose(page, "Effort (RPE)", "5");
     await choose(page, "Technique", "Clean");
-    await shot(page, "03-frame-record");
+    await shot(page, "03-frame-assessment");
     await press(page, "Save set 1");
     await press(page, "Add another set");
     await choose(page, "Kettlebells", "16 kg");
@@ -278,7 +287,7 @@ test.describe("Spawn journey", () => {
     await page.getByLabel("Time walking, minutes").fill("8");
     await choose(page, "Effort (RPE)", "7");
     await choose(page, "What limited you?", "Breath");
-    await shot(page, "04-engine-record");
+    await shot(page, "04-engine-assessment");
     await press(page, "Save run/walk");
     await confirm(page, "No");
 
@@ -323,6 +332,7 @@ test.describe("Spawn journey", () => {
     await expectTouchTargets(page);
     await expect(page.getByText(/provisional calibration/)).toBeVisible();
     await shot(page, "07-initialized");
+    await shot(page, "07b-initialized-full", { fullPage: true });
 
     // Stat detail foundation: Current, Peak, Confidence, why, evidence.
     await statList.getByRole("link", { name: /^Endurance/ }).click();
@@ -333,11 +343,37 @@ test.describe("Spawn journey", () => {
     await expect(page.getByText("Pace distance")).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: "Spawn · E04" })).toContainText("20-Minute Run/Walk");
     await expectNoHorizontalOverflow(page);
-    await shot(page, "08-stat-detail");
+    await shot(page, "09-stat-detail");
+    await shot(page, "09b-stat-detail-full", { fullPage: true });
 
     // The shell is unlocked; root resumes at Today.
     await page.goto("/");
     await expect(page).toHaveURL(/\/today$/);
+    if (SHOTS) {
+      await shot(page, "10-today");
+      await shot(page, "10b-today-full", { fullPage: true });
+      for (const [path, name] of [
+        ["/stats", "08-stats"],
+        ["/quests", "11-quests"],
+        ["/ascend", "12-ascend"],
+        ["/bosses", "13-bosses"],
+        ["/profile", "16-you"],
+      ] as const) {
+        await page.goto(path);
+        await expect(page.locator("h1")).toBeVisible();
+        await shot(page, name);
+      }
+      await page.goto("/ascend");
+      await shot(page, "12b-ascend-full", { fullPage: true });
+      await page.goto("/design/boss");
+      await shot(page, "14-boss-component");
+      await shot(page, "14b-boss-component-full", { fullPage: true });
+      await page.goto("/design/workout");
+      await shot(page, "15-active-workout");
+      await page.goto("/design");
+      await shot(page, "17-design-gallery-full", { fullPage: true });
+      await page.goto("/");
+    }
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
     await page.goto("/spawn/movement/m01");
     await expect(page.getByText("Recorded", { exact: true })).toBeVisible();
@@ -353,7 +389,7 @@ test.describe("onboarding resume and validation", () => {
       await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
     }
     await page.goto("/profile");
-    await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "You" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Back to Spawn" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();

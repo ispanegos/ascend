@@ -1,5 +1,39 @@
+.identity {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.avatarFrame {
+  width: 88px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  background: radial-gradient(70% 70% at 50% 35%, var(--bg-elevated), var(--bg-deep));
+  color: var(--text-muted);
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.identityName {
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-h2-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
 .list {
-  margin: var(--space-3) 0 0;
+  margin: 0;
 }
 
 .row {
@@ -7,7 +41,7 @@
   justify-content: space-between;
   gap: var(--space-4);
   padding-block: var(--space-3);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--border-default);
 }
 
 .row:first-child {
@@ -16,7 +50,7 @@
 
 .row dt {
   flex: none;
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
 }
 
 .row dd {
@@ -39,25 +73,33 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-warning);
+  border: 1px solid rgba(239, 123, 59, 0.45);
   border-radius: var(--radius-md);
+  background: rgba(239, 123, 59, 0.08);
   font-weight: 600;
 }
 
 .flags svg {
   flex: none;
-  color: var(--color-warning);
+  color: var(--accent-warning);
 }
 
 .editList {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--color-border);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
 }
 
 .editList li {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.editList li:last-child {
+  border-bottom: 0;
 }
 
 .editRow {
@@ -66,7 +108,7 @@
   align-items: center;
   gap: var(--space-3);
   min-height: 56px;
-  padding-block: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   color: inherit;
   text-decoration: none;
 }
@@ -78,7 +120,7 @@
 }
 
 .editLabel {
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
   font-weight: 600;
 }
@@ -89,5 +131,5 @@
 }
 
 .chevron {
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
 }

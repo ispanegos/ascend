@@ -43,7 +43,7 @@ export function Preflight({ kind }: { kind: SessionKind }) {
   return (
     <div className={styles.page}>
       <header className={styles.hero}>
-        <p className="text-label text-muted">Spawn {session.number}</p>
+        <p className="text-label text-gold">Spawn {session.number}</p>
         <h1 className="text-display">{session.title}</h1>
         <p className={styles.lede}>{content.intro}</p>
       </header>

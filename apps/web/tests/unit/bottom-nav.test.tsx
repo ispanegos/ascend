@@ -6,19 +6,18 @@ import { NAV_ITEMS, isActiveHref } from "@/components/shell/nav-items";
 const pathname = vi.hoisted(() => ({ current: "/today" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
 
-describe("BottomNav (spec §25, §34)", () => {
+describe("BottomNav (Design System V2 §4)", () => {
   beforeEach(() => {
     pathname.current = "/today";
   });
 
   it("has at most five destinations in the specified order", () => {
-    expect(NAV_ITEMS.map((item) => item.label)).toEqual([
-      "Today",
-      "Stats",
-      "Ascend",
-      "Bosses",
-      "Profile",
-    ]);
+    expect(NAV_ITEMS.map((item) => item.label)).toEqual(["Today", "Quests", "Ascend", "Stats", "You"]);
+  });
+
+  it("puts ASCEND in the centre as the primary destination", () => {
+    expect(NAV_ITEMS[2]).toMatchObject({ label: "Ascend", primary: true });
+    expect(NAV_ITEMS.filter((item) => item.primary)).toHaveLength(1);
   });
 
   it("is a labelled navigation landmark with named links", () => {

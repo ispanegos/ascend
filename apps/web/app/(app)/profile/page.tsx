@@ -3,7 +3,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { PixelArtFrame } from "@/components/art/PixelArtFrame";
+import { PixelIcon } from "@/components/ui/PixelIcon";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { signOut } from "@/features/auth/actions";
 import { DevTools } from "@/features/spawn/components/DevTools";
 import { getSerializableContext } from "@/features/spawn/data";
@@ -13,7 +16,7 @@ import { devToolsEnabled } from "@/lib/dev";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./profile.module.css";
 
-export const metadata: Metadata = { title: "Profile" };
+export const metadata: Metadata = { title: "You" };
 
 const SECTIONS = [
   { title: "Body", steps: ["birth", "sex", "height", "weight", "body-fat", "measurements"] },
@@ -35,13 +38,24 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Profile" />
+      <ScreenHeader title="You" />
 
       <div className="stack stack--lg">
+        {/* Reserved for the neutral morphology avatar (V2 §22); not built yet. */}
+        <section className={styles.identity} aria-label="Athlete">
+          <PixelArtFrame className={styles.avatarFrame}>
+            <span className={styles.avatar} data-slot="avatar">
+              <PixelIcon name="you" size={48} />
+            </span>
+          </PixelArtFrame>
+          <div className={styles.identityText}>
+            <p className={styles.identityName}>{context.profile.display_name ?? "Athlete"}</p>
+            <p className="text-muted text-small">Body, training context, equipment and availability.</p>
+          </div>
+        </section>
+
         <Card as="section" aria-labelledby="account-heading">
-          <h2 id="account-heading" className="text-label text-muted">
-            Account
-          </h2>
+          <SectionHeader id="account-heading" title="Account" />
           <dl className={styles.list}>
             <div className={styles.row}>
               <dt>Name</dt>
@@ -71,9 +85,7 @@ export default async function ProfilePage() {
 
         {SECTIONS.map((section) => (
           <section key={section.title} aria-labelledby={`section-${section.title}`}>
-            <h2 id={`section-${section.title}`} className="text-label text-muted">
-              {section.title}
-            </h2>
+            <SectionHeader id={`section-${section.title}`} title={section.title} />
             <ul className={styles.editList}>
               {section.steps.map((step) => {
                 const row = rows.find((r) => r.step === step);

@@ -9,9 +9,11 @@ import {
 } from "@ascend/shared";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Artwork } from "@/components/art/Artwork";
 import { FlowHeader } from "@/components/shell/FlowHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import { MobileActionBar } from "@/components/ui/MobileActionBar";
+import { PixelIcon } from "@/components/ui/PixelIcon";
 import { AttributeLadder } from "@/features/spawn/components/AttributeLadder";
 import { DevTools } from "@/features/spawn/components/DevTools";
 import styles from "@/features/spawn/components/spawn.module.css";
@@ -53,8 +55,11 @@ export default async function SpawnCompletePage() {
           <FlowHeader context="Athlete profile" exitHref="/today" />
           <main id="main" className={styles.page}>
             <header className={styles.hero}>
-              <p className="text-label text-muted">Athlete profile</p>
-              <h1 className="text-display">Initialized.</h1>
+              <Artwork id="world.dusk-ruins" ratio="2 / 1" priority scrim="bottom" className={styles.heroArt} />
+              <p className={`text-label ${styles.kicker}`}>
+                <PixelIcon name="verified" size={16} /> Athlete profile
+              </p>
+              <h1 className="text-fantasy text-display">Initialized.</h1>
               <p className={styles.lede}>
                 Your first estimate of what you can actually do. Every Stat is provisional: Spawn sets your starting
                 point, and a Stat is verified only by an independent result on a later day.
@@ -84,7 +89,10 @@ export default async function SpawnCompletePage() {
       <main id="main" className={styles.page}>
         <InitializeFlow retry={calibrating}>
           <header className={styles.hero}>
-            <p className="text-label text-muted">Spawn complete</p>
+            <Artwork id="world.spawn-origin" ratio="2 / 1" priority scrim="bottom" className={styles.heroArt} />
+            <p className={`text-label ${styles.kicker}`}>
+              <PixelIcon name="check" size={16} /> Spawn complete
+            </p>
             <h1 className="text-display">Athlete data collected.</h1>
             <p className={styles.lede}>
               {calibrating

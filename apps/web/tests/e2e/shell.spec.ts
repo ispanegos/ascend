@@ -30,7 +30,7 @@ test.describe("authenticated shell", () => {
   }
 
   test("Stat detail and paths fit the viewport", async ({ page }) => {
-    for (const path of ["/stats/strength", "/stats/power", "/ascend/paths", "/spawn/complete"]) {
+    for (const path of ["/stats/strength", "/stats/power", "/ascend/paths", "/spawn/complete", "/bosses"]) {
       await page.goto(path);
       await expect(page.locator("h1")).toBeVisible();
       await expectNoHorizontalOverflow(page);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/Button";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { EmptyState } from "@/components/ui/States";
 import { requireInitializedAthlete } from "@/features/spawn/guard";
 
@@ -14,8 +14,9 @@ export default async function ChoosePathsPage() {
   await requireInitializedAthlete();
   return (
     <>
-      <PageHeader eyebrow="Next" title="Choose your paths" />
+      <ScreenHeader eyebrow="Current objective" title="Choose your paths" />
       <EmptyState
+        art="states.sealed-gate"
         title="Path selection opens in the next release"
         action={
           <ButtonLink href="/stats" variant="secondary" fit="auto">

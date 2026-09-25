@@ -3,12 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { AttributeIcon } from "@/components/ui/AttributeIcon";
+import { ConfidenceBar } from "@/components/ui/ConfidenceBar";
+import { PixelIcon } from "@/components/ui/PixelIcon";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/States";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { requireInitializedAthlete } from "@/features/spawn/guard";
 import { getStatDetail } from "@/features/stats/data";
-import { ConfidenceMeter } from "@/features/stats/StatList";
 import styles from "@/features/stats/stats.module.css";
 import {
   displayPercent,
@@ -41,8 +44,8 @@ function formatDate(iso: string): string {
 }
 
 /**
- * Stat detail foundation (spec §63): Current, Peak, Confidence, status,
- * evidence, subdomains, last verified, engine version, and why.
+ * Stat detail (spec §63, V2 §18): Current, Peak, Confidence, status, why this
+ * score, evidence. A data screen — runes and type, no scenery.
  */
 export default async function StatDetailPage({ params }: { params: Promise<{ attribute: string }> }) {
   const { attribute } = await params;
@@ -54,7 +57,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
   if (!detail) {
     return (
       <>
-        <PageHeader title={label} />
+        <ScreenHeader title={label} />
         <EmptyState title="Not calculated yet" />
       </>
     );
@@ -69,47 +72,71 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
   // Only worth a sentence when the cautious estimate changes the displayed integer.
   const adjusted =
     estimate !== null && stat.current !== null && displayStat(estimate.observed) !== displayStat(stat.current);
+  const unranked = stat.current === null;
 
   return (
     <>
-      <Link href="/stats" className={styles.muted} style={{ display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+      <Link href="/stats" className={styles.back}>
         <Icon name="chevron-left" size={18} /> Stats
       </Link>
-      <PageHeader title={label} aside={<StatusBadge status={stat.status} />} />
+      <header className={styles.detailTitle}>
+        <span className={styles.detailName}>
+          <AttributeIcon attribute={attribute} size={32} muted={unranked} />
+          <h1>{label}</h1>
+        </span>
+      </header>
 
       <div className="stack stack--lg">
-        <section className={styles.hero} aria-label="Summary">
-          <div className={cx(styles.figure, styles.primaryFigure)}>
-            <span className={cx("stat-number", styles.figureValue)}>{displayStat(stat.current)}</span>
-            <span className="text-label text-muted">Current</span>
+        <section className={styles.figures} aria-label="Summary">
+          <div className={cx(styles.figure, !unranked && styles.current)}>
+            <span className={styles.figureLabel}>Current</span>
+            <span className={cx("stat-number", styles.figureValue, unranked && styles.muted)}>{displayStat(stat.current)}</span>
           </div>
           <div className={styles.figure}>
-            <span className={cx("stat-number", styles.figureValue, stat.verifiedPeak === null && styles.muted)}>
-              {displayStat(stat.verifiedPeak)}
-            </span>
-            <span className="text-label text-muted">
-              Peak{stat.verifiedPeak === null && stat.current !== null ? <span className={styles.peakNote}>Not verified yet</span> : null}
-            </span>
+            <span className={styles.figureLabel}>Peak</span>
+            {stat.verifiedPeak !== null ? (
+              <span className={cx("stat-number", styles.figureValue, styles.peakValue)}>
+                <PixelIcon name="peak" size={20} />
+                {displayStat(stat.verifiedPeak)}
+              </span>
+            ) : (
+              <>
+                <span className={cx("stat-number", styles.figureValue, styles.muted)}>—</span>
+                {stat.current !== null ? <span className={styles.peakNote}>Not verified yet</span> : null}
+              </>
+            )}
           </div>
           <div className={styles.figure}>
-            <span className={cx("stat-number", styles.figureValue)}>
-              {stat.current === null ? "—" : displayPercent(stat.confidence)}
-            </span>
-            <span className="text-label text-muted">Confidence</span>
+            <span className={styles.figureLabel}>Confidence</span>
+            <span className={cx("stat-number", styles.figureValue)}>{unranked ? "—" : displayPercent(stat.confidence)}</span>
+            {unranked ? null : <ConfidenceBar value={stat.confidence} status={stat.status} />}
+          </div>
+          <div className={cx(styles.figure, styles.statusFigure)}>
+            <span className={styles.figureLabel}>Status</span>
+            <StatusBadge status={stat.status} />
           </div>
         </section>
 
-        {stat.current === null ? (
-          <p>
+        {unranked ? (
+          <p className="text-muted">
             {label} is unranked: ASCEND has no evidence for it yet. That is unknown, not zero
             {attribute === "power" ? " — Spawn has no Power test by design." : "."}
           </p>
         ) : null}
 
+        {longitudinal && !unranked && !longitudinal.eligible ? (
+          <p className={styles.calibrating}>
+            <PixelIcon name="provisional" size={16} />
+            <span>
+              Provisional. Spawn sets your starting point; {label} can become verified after an independent result on a
+              later day — a reassessment, a verified workout or a Boss.
+              {attribute === "recovery" ? " Recovery also needs workload or sleep evidence." : ""}
+            </span>
+          </p>
+        ) : null}
+
         <section className={styles.section} aria-labelledby="why-heading">
-          <h2 id="why-heading" className="text-label text-muted">
-            Why this score?
-          </h2>
+          <SectionHeader id="why-heading" title="Why this score?" aside={unranked ? undefined : displayStat(stat.current)} />
           <ul className={styles.table}>
             {subdomains.map((sd) => (
               <li key={sd.name} className={styles.tableRow}>
@@ -121,36 +148,35 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
                       : `Not measured — ${sd.missingReason}`}
                   </small>
                 </span>
-                <span className={cx("stat-number", !sd.observed && styles.muted)}>{sd.observed ? displayStat(sd.score) : "—"}</span>
+                {sd.observed && sd.score !== null ? (
+                  <span className={styles.subScore}>
+                    <span className="stat-number">{displayStat(sd.score)}</span>
+                    <span className={styles.subBar} aria-hidden="true">
+                      <span style={{ width: `${Math.min(100, Math.max(0, sd.score))}%` }} />
+                    </span>
+                  </span>
+                ) : (
+                  <span className={cx("stat-number", styles.muted)}>—</span>
+                )}
               </li>
             ))}
           </ul>
           {adjusted ? (
-            <p className={styles.note}>
+            <p className={styles.note} style={{ marginTop: "var(--space-3)" }}>
               Measured results alone give {displayStat(estimate.observed)}. Some tests have no result yet, so ASCEND
               holds the score to a cautious {displayStat(stat.current)} until they do. Missing results never count as
               zero and never raise a Stat.
             </p>
           ) : (
-            <p className={styles.note}>
+            <p className={styles.note} style={{ marginTop: "var(--space-3)" }}>
               Missing results lower Confidence. They never count as zero and never raise a Stat.
             </p>
           )}
         </section>
 
-        {longitudinal && stat.current !== null && !longitudinal.eligible ? (
-          <p className={styles.calibrating}>
-            Provisional. Spawn sets your starting point; {label} can become verified after an independent result on a
-            later day — a reassessment, a verified workout or a Boss.
-            {attribute === "recovery" ? " Recovery also needs workload or sleep evidence." : ""}
-          </p>
-        ) : null}
-
-        {confidence && stat.current !== null ? (
+        {confidence && !unranked ? (
           <section className={styles.section} aria-labelledby="confidence-heading">
-            <h2 id="confidence-heading" className="text-label text-muted">
-              Confidence {displayPercent(confidence.value)}
-            </h2>
+            <SectionHeader id="confidence-heading" title="Confidence" aside={displayPercent(confidence.value)} />
             <ul className={styles.table}>
               {(
                 [
@@ -166,7 +192,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
                     <small>{hint}</small>
                   </span>
                   <span className={styles.meta}>
-                    <ConfidenceMeter value={value} />
+                    <ConfidenceBar value={value} status={stat.status} />
                     {displayPercent(value)}
                   </span>
                 </li>
@@ -176,9 +202,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
         ) : null}
 
         <section className={styles.section} aria-labelledby="evidence-heading">
-          <h2 id="evidence-heading" className="text-label text-muted">
-            Evidence
-          </h2>
+          <SectionHeader id="evidence-heading" title="Evidence" aside={detail.evidence.length || undefined} />
           {detail.evidence.length ? (
             <ul className={styles.table}>
               {detail.evidence.map((e) => (
@@ -189,7 +213,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
                       {SOURCE_LABEL[e.sourceType] ?? "Evidence"} · {e.testKey}
                     </small>
                   </span>
-                  <span className={styles.muted}>{formatDate(e.occurredAt)}</span>
+                  <span className={cx("stat-number", styles.muted)}>{formatDate(e.occurredAt)}</span>
                 </li>
               ))}
             </ul>
@@ -197,7 +221,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
             <p className="text-muted">No evidence yet.</p>
           )}
           {gaps.length ? (
-            <p className={styles.note}>
+            <p className={styles.note} style={{ marginTop: "var(--space-3)" }}>
               Without a result: {gaps.map((g) => testName(g.testKey)).join(", ")}. Nothing is assumed about them.
             </p>
           ) : null}

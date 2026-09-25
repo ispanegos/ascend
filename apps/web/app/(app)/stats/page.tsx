@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { EmptyState } from "@/components/ui/States";
 import { requireInitializedAthlete } from "@/features/spawn/guard";
 import { getLatestStats } from "@/features/stats/data";
@@ -14,17 +14,17 @@ export default async function StatsPage() {
 
   return (
     <>
-      <PageHeader title="Stats" />
+      <ScreenHeader title="Stats" />
       {stats ? (
         <div className="stack stack--lg">
           <StatList stats={stats} />
           <p className={styles.note}>
             Tap a Stat to see why it is what it is. Engine {stats.engineVersion} · {stats.calibrationStatus}{" "}
-            calibration.
+            calibration — ASCEND&apos;s own scale, not a percentile.
           </p>
         </div>
       ) : (
-        <EmptyState title="Overall — unranked">
+        <EmptyState title="Overall — unranked" icon="unranked">
           <p>Stats appear once your athlete profile is initialized. Unknown is not zero.</p>
         </EmptyState>
       )}
