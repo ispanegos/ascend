@@ -4,6 +4,7 @@ export interface ActionFailure {
   error: string;
   fieldErrors?: Record<string, string>;
   redirectTo?: string;
+  confirm?: Record<string, string>;
 }
 
 export const OFFLINE_FAILURE: ActionFailure = {

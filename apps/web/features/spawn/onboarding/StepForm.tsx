@@ -108,23 +108,29 @@ function useSave(mode: StepMode, returnTo: string | undefined) {
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<Record<string, string>>({});
 
   function save(input: StepInput) {
     setFormError(null);
     startTransition(async () => {
       const result = await safely(() => saveProfileStep(input, mode));
       if (!result.ok) {
+        if (result.confirm) {
+          setConfirm(result.confirm);
+          return;
+        }
         setErrors(result.fieldErrors ?? {});
         setFormError(result.error);
         return;
       }
+      setConfirm({});
       setErrors({});
       router.push(returnTo ?? result.redirectTo ?? "/");
       router.refresh();
     });
   }
 
-  return { save, pending, errors, setErrors, formError };
+  return { save, pending, errors, setErrors, formError, confirm, clearConfirm: () => setConfirm({}) };
 }
 
 function FormError({ message }: { message: string | null }) {
@@ -196,7 +202,8 @@ function Welcome() {
 // ---------------------------------------------------------------------------
 
 function EditStep({ step, mode, context, backHref, returnTo }: StepFormProps & { step: EditableStep }) {
-  const { save, pending, errors, setErrors, formError } = useSave(mode, returnTo);
+  const { save, pending, errors, setErrors, formError, confirm, clearConfirm } = useSave(mode, returnTo);
+  const confirmMessage = Object.values(confirm)[0];
   const cta = mode === "edit" ? "Save" : "Continue";
   const common = { step, mode, backHref } as const;
 
@@ -259,7 +266,9 @@ function EditStep({ step, mode, context, backHref, returnTo }: StepFormProps & {
           unit="cm"
           inputMode="decimal"
           initial={profile.height_cm === null ? "" : String(profile.height_cm)}
-          onSave={(value) => save({ step, heightCm: value })}
+          onSave={(value, confirmed) => save({ step, heightCm: value, confirmed })}
+          confirmMessage={confirmMessage}
+          onEdit={clearConfirm}
           pending={pending}
           error={errors.heightCm}
           formError={formError}
@@ -276,7 +285,9 @@ function EditStep({ step, mode, context, backHref, returnTo }: StepFormProps & {
           unit="kg"
           inputMode="decimal"
           initial={context.body.weight ? String(context.body.weight.value) : ""}
-          onSave={(value) => save({ step, weightKg: value })}
+          onSave={(value, confirmed) => save({ step, weightKg: value, confirmed })}
+          confirmMessage={confirmMessage}
+          onEdit={clearConfirm}
           pending={pending}
           error={errors.weightKg}
           formError={formError}
@@ -294,7 +305,9 @@ function EditStep({ step, mode, context, backHref, returnTo }: StepFormProps & {
           inputMode="decimal"
           optional
           initial={context.body.body_fat ? String(context.body.body_fat.value) : ""}
-          onSave={(value) => save({ step, bodyFat: value })}
+          onSave={(value, confirmed) => save({ step, bodyFat: value, confirmed })}
+          confirmMessage={confirmMessage}
+          onEdit={clearConfirm}
           pending={pending}
           error={errors.bodyFat}
           formError={formError}
@@ -461,13 +474,18 @@ function TextStep({
   inputMode,
   autoComplete = "off",
   optional = false,
+  confirmMessage,
+  onEdit,
   ...common
 }: StepCommon & {
   title: string;
   description?: string;
   label: string;
   initial: string;
-  onSave: (value: string) => void;
+  onSave: (value: string, confirmed?: boolean) => void;
+  /** Set when the value is valid but unusual (ADR-023 §7). */
+  confirmMessage?: string | undefined;
+  onEdit?: () => void;
   error: string | undefined;
   unit?: string;
   type?: "text" | "date";
@@ -484,9 +502,20 @@ function TextStep({
       actions={
         <>
           <FormError message={common.formError} />
-          <Button onClick={() => onSave(value)} loading={common.pending}>
-            {common.cta}
-          </Button>
+          {confirmMessage ? (
+            <>
+              <p className={styles.warning} role="alert">
+                {confirmMessage}
+              </p>
+              <Button onClick={() => onSave(value, true)} loading={common.pending}>
+                Yes, that&apos;s correct
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => onSave(value)} loading={common.pending}>
+              {common.cta}
+            </Button>
+          )}
           {optional && common.mode === "onboarding" ? (
             <Button variant="ghost" onClick={() => onSave("")} disabled={common.pending}>
               Skip
@@ -509,7 +538,10 @@ function TextStep({
           enterKeyHint="done"
           unit={unit}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={(event) => {
+            setValue(event.target.value);
+            onEdit?.();
+          }}
           error={error}
           className={styles.bigField}
         />

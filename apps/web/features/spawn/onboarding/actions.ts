@@ -7,11 +7,15 @@ import {
   CIRCUMFERENCE_RULE,
   DATA_SOURCES,
   ENVIRONMENTS,
+  BODY_FAT_TYPICAL,
   HEIGHT_RULE,
+  HEIGHT_TYPICAL,
   MAX_NOTE_LENGTH,
   RECENT_INACTIVITY,
   TRAINING_EXPERIENCE,
   WEIGHT_RULE,
+  WEIGHT_TYPICAL,
+  unusualMessage,
   isOption,
   parseDecimal,
   validateAvailabilityDay,
@@ -40,9 +44,9 @@ export type StepInput =
   | { step: "name"; displayName: string }
   | { step: "birth"; dateOfBirth: string }
   | { step: "sex"; sex: string }
-  | { step: "height"; heightCm: string }
-  | { step: "weight"; weightKg: string }
-  | { step: "body-fat"; bodyFat: string }
+  | { step: "height"; heightCm: string; confirmed?: boolean | undefined }
+  | { step: "weight"; weightKg: string; confirmed?: boolean | undefined }
+  | { step: "body-fat"; bodyFat: string; confirmed?: boolean | undefined }
   | { step: "measurements"; values: Record<string, string> }
   | { step: "experience"; value: string }
   | { step: "activity"; value: string }
@@ -126,6 +130,18 @@ async function writeMeasurement(
   return !error;
 }
 
+function needsConfirmation(
+  field: string,
+  value: number | null,
+  typical: readonly [number, number],
+  unit: string,
+  confirmed: unknown,
+): ActionResult | null {
+  const message = unusualMessage(value, typical, unit);
+  if (!message || confirmed === true) return null;
+  return { ok: false, error: "That value is unusual.", confirm: { [field]: message } };
+}
+
 function parseRequired(raw: unknown, rule: NumberRule, field: string, label: string) {
   const parsed = parseDecimal(typeof raw === "string" ? raw : "", rule);
   if (!parsed.ok) return { error: { [field]: parsed.error } };
@@ -158,17 +174,23 @@ async function persistStep(supabase: Supabase, userId: string, input: StepInput,
     case "height": {
       const parsed = parseRequired(input.heightCm, HEIGHT_RULE, "heightCm", "height");
       if (parsed.error) return invalid(parsed.error);
+      const check = needsConfirmation("heightCm", parsed.value, HEIGHT_TYPICAL, "cm", input.confirmed);
+      if (check) return check;
       const { error } = await supabase.from("profiles").update({ height_cm: parsed.value }).eq("id", userId);
       return error ? dbError() : { ok: true };
     }
     case "weight": {
       const parsed = parseRequired(input.weightKg, WEIGHT_RULE, "weightKg", "weight");
       if (parsed.error) return invalid(parsed.error);
+      const check = needsConfirmation("weightKg", parsed.value, WEIGHT_TYPICAL, "kg", input.confirmed);
+      if (check) return check;
       return (await writeMeasurement(supabase, userId, "weight", "kg", parsed.value, mode)) ? { ok: true } : dbError();
     }
     case "body-fat": {
       const parsed = parseDecimal(typeof input.bodyFat === "string" ? input.bodyFat : "", BODY_FAT_RULE);
       if (!parsed.ok) return invalid({ bodyFat: parsed.error });
+      const check = needsConfirmation("bodyFat", parsed.value, BODY_FAT_TYPICAL, "%", input.confirmed);
+      if (check) return check;
       return (await writeMeasurement(supabase, userId, "body_fat", "percent", parsed.value, mode))
         ? { ok: true }
         : dbError();

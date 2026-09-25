@@ -74,6 +74,9 @@ describe("profile validation", () => {
     expect(validateBirthDate("1988-02-29", today)).toEqual({ ok: true, value: "1988-02-29" });
     expect(validateBirthDate("2001-02-30", today).ok).toBe(false);
     expect(validateBirthDate("2020-01-01", today).ok).toBe(false);
+    // v0.1 is 18+ (ADR-023).
+    expect(validateBirthDate("2008-09-26", today).ok).toBe(false);
+    expect(validateBirthDate("2008-09-25", today).ok).toBe(true);
     expect(validateBirthDate("", today).ok).toBe(false);
   });
 

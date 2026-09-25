@@ -11,20 +11,25 @@ export interface Option<T extends string = string> {
   label: string;
 }
 
+/** Context only — never used to assign Stats (ADR-023). */
 export const TRAINING_EXPERIENCE = [
-  { value: "none", label: "New to structured training" },
-  { value: "under_1_year", label: "Less than a year" },
-  { value: "1_3_years", label: "1–3 years" },
-  { value: "over_3_years", label: "More than 3 years" },
+  { value: "never_trained", label: "Never trained" },
+  { value: "beginner", label: "Beginner" },
+  { value: "recreational", label: "Recreational" },
+  { value: "trained", label: "Trained" },
+  { value: "competitive", label: "Competitive" },
 ] as const satisfies readonly Option[];
 
 export type TrainingExperience = (typeof TRAINING_EXPERIENCE)[number]["value"];
 
+/** Context only — never used to assign Stats (ADR-023). */
 export const RECENT_INACTIVITY = [
   { value: "active", label: "Training regularly now" },
-  { value: "under_3_months", label: "Stopped less than 3 months ago" },
-  { value: "3_12_months", label: "Stopped 3–12 months ago" },
-  { value: "over_12_months", label: "Stopped more than a year ago" },
+  { value: "under_1_month", label: "Less than a month off" },
+  { value: "1_3_months", label: "1–3 months off" },
+  { value: "3_6_months", label: "3–6 months off" },
+  { value: "6_12_months", label: "6–12 months off" },
+  { value: "over_12_months", label: "More than a year off" },
 ] as const satisfies readonly Option[];
 
 export type RecentInactivity = (typeof RECENT_INACTIVITY)[number]["value"];
@@ -107,9 +112,14 @@ export type Circumference = (typeof BODY_CIRCUMFERENCES)[number]["value"];
 export const HEIGHT_RULE: NumberRule = { min: 100, max: 250, decimals: 1, unit: "cm" };
 export const WEIGHT_RULE: NumberRule = { min: 30, max: 350, decimals: 1, unit: "kg" };
 export const BODY_FAT_RULE: NumberRule = { min: 2, max: 75, decimals: 1, unit: "percent" };
+/** Outside these, a value is saved only after the athlete confirms it (ADR-023 §7). */
+export const HEIGHT_TYPICAL = [140, 215] as const;
+export const WEIGHT_TYPICAL = [40, 200] as const;
+export const BODY_FAT_TYPICAL = [5, 50] as const;
 export const CIRCUMFERENCE_RULE: NumberRule = { min: 10, max: 250, decimals: 1, unit: "cm" };
 export const LOAD_RULE: NumberRule = { min: 0.5, max: 250, decimals: 2, unit: "kg" };
-export const MIN_AGE_YEARS = 13;
+/** ASCEND v0.1 is 18+ (ADR-023). */
+export const MIN_AGE_YEARS = 18;
 export const MAX_AGE_YEARS = 110;
 export const MAX_NOTE_LENGTH = 1000;
 

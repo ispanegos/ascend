@@ -179,3 +179,11 @@
 .chevron {
   color: var(--color-ink-muted);
 }
+
+.warning {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-warning);
+  background: var(--color-surface-raised);
+  font-weight: 600;
+}

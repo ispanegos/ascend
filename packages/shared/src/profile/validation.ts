@@ -26,7 +26,7 @@ export function validateBirthDate(raw: string, today: Date): Validated<string> {
     return { ok: false, error: "Enter a valid date." };
   }
   const age = ageOn(text, today);
-  if (age < MIN_AGE_YEARS) return { ok: false, error: `ASCEND is for athletes aged ${MIN_AGE_YEARS} and over.` };
+  if (age < MIN_AGE_YEARS) return { ok: false, error: `ASCEND v0.1 is for athletes aged ${MIN_AGE_YEARS} and over.` };
   if (age > MAX_AGE_YEARS) return { ok: false, error: "Check the year." };
   return { ok: true, value: text };
 }
@@ -101,4 +101,10 @@ export function validateOptionalClock(raw: string): Validated<string | null> {
   const text = raw.trim();
   if (text === "") return { ok: true, value: null };
   return isClockTime(text) ? { ok: true, value: text } : { ok: false, error: "Enter a time as HH:MM." };
+}
+
+/** Message for a value outside its typical range, or null (ADR-023 §7). */
+export function unusualMessage(value: number | null, typical: readonly [number, number], unit: string): string | null {
+  if (value === null || (value >= typical[0] && value <= typical[1])) return null;
+  return `${value} ${unit} is unusual. Check it — if it's right, confirm to save.`;
 }

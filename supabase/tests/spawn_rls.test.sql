@@ -226,7 +226,7 @@ select is(
 
 -- M03: skipped with a reason; retry adds a new row
 insert into public.assessment_results (athlete_id, session_id, test_key, protocol_version, status, reason_code)
-values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a0000000-0000-0000-0000-000000000001', 'M03', '0.1.0', 'skipped', 'time');
+values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a0000000-0000-0000-0000-000000000001', 'M03', '0.1.0', 'skipped', 'other');
 select throws_ok(
   $$insert into public.assessment_results (athlete_id, session_id, test_key, protocol_version, status)
     values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a0000000-0000-0000-0000-000000000001', 'M04', '0.1.0', 'skipped')$$,

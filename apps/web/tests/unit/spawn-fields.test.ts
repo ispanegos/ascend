@@ -2,9 +2,14 @@ import {
   TEST_CATALOG,
   buildAttemptRecord,
   buildResultPatch,
+  LIMITING_FACTORS,
+  TECHNIQUE_VALUES,
+  TEST_KEYS,
   crossFieldErrors,
   namesPainAsLimit,
   statusForReason,
+  unusualValues,
+  validateFields,
   visibleFields,
 } from "@ascend/shared";
 import { describe, expect, it } from "vitest";
@@ -104,11 +109,47 @@ describe("pain and skip semantics (spec §53, §72.4)", () => {
     expect(namesPainAsLimit([{ limiting_factor: "breath" }])).toBe(false);
   });
 
-  it("maps reasons to statuses", () => {
-    expect(statusForReason("time", false)).toBe("skipped");
-    expect(statusForReason("no_equipment", false)).toBe("skipped");
+  it("maps approved reasons to statuses (ADR-023)", () => {
+    expect(statusForReason("missing_equipment", false)).toBe("skipped");
+    expect(statusForReason("environment_unavailable", false)).toBe("skipped");
+    expect(statusForReason("other", false)).toBe("skipped");
     expect(statusForReason("pain", false)).toBe("cannot_perform");
-    expect(statusForReason("unable", false)).toBe("cannot_perform");
-    expect(statusForReason("time", true)).toBe("aborted");
+    expect(statusForReason("cannot_perform_safely", false)).toBe("cannot_perform");
+    expect(statusForReason("does_not_know_technique", false)).toBe("cannot_perform");
+    expect(statusForReason("other", true)).toBe("aborted");
+  });
+});
+
+describe("approved vocabularies (ADR-023)", () => {
+  it("every limiting-factor option comes from the shared vocabulary", () => {
+    for (const key of TEST_KEYS) {
+      for (const field of [...TEST_CATALOG[key].attemptFields, ...TEST_CATALOG[key].resultFields]) {
+        if (field.kind === "choice" && (field.key === "limiting_factor" || field.key === "stop_reason")) {
+          for (const option of field.options) {
+            expect(LIMITING_FACTORS as readonly string[], `${key}.${field.key}`).toContain(option.value);
+          }
+        }
+        if (field.kind === "choice" && field.key === "technique") {
+          expect(field.options.map((o) => o.value)).toEqual([...TECHNIQUE_VALUES]);
+        }
+      }
+    }
+  });
+});
+
+describe("unusual values need confirmation, never clamping (ADR-023 §7)", () => {
+  it("flags a valid but unusual heart rate", () => {
+    const { values } = validateFields(TEST_CATALOG.E02.attemptFields, {
+      distance_m: "612",
+      duration_s: "360",
+      avg_hr_bpm: "228",
+    });
+    expect(values.avg_hr_bpm).toBe(228);
+    expect(Object.keys(unusualValues(TEST_CATALOG.E02.attemptFields, values))).toEqual(["avg_hr_bpm"]);
+  });
+
+  it("accepts typical values silently", () => {
+    const { values } = validateFields(TEST_CATALOG.E02.attemptFields, { distance_m: "612", duration_s: "360", avg_hr_bpm: "118" });
+    expect(unusualValues(TEST_CATALOG.E02.attemptFields, values)).toEqual({});
   });
 });

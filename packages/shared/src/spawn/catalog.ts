@@ -64,6 +64,11 @@ export interface NumberFieldSpec extends FieldBase {
    * have no minus key, so the sign is chosen explicitly.
    */
   signLabels?: readonly [string, string];
+  /**
+   * Values outside this range but inside min/max are accepted only after the
+   * athlete confirms them (ADR-023 §7). Typo protection, not physiology.
+   */
+  typical?: readonly [number, number];
 }
 
 export interface DurationFieldSpec extends FieldBase {
@@ -75,6 +80,7 @@ export interface DurationFieldSpec extends FieldBase {
   unit: "s" | "s_per_km";
   /** Protocol duration offered as the starting value, e.g. 6:00 for E02. */
   defaultSeconds?: number;
+  typical?: readonly [number, number];
 }
 
 export interface LoadFieldSpec extends FieldBase {
@@ -154,6 +160,30 @@ export function isAttemptColumn(key: string): key is AttemptColumn {
 }
 
 // ---------------------------------------------------------------------------
+// Approved vocabularies (ADR-023)
+// ---------------------------------------------------------------------------
+
+export const TECHNIQUE_VALUES = ["clean", "minor_compensation", "major_compensation", "stopped_for_technique"] as const;
+
+/** One limiting-factor vocabulary for every test; each test exposes a subset. */
+export const LIMITING_FACTORS = [
+  "nothing",
+  "breath",
+  "muscular_fatigue",
+  "grip",
+  "technique",
+  "pain",
+  "pacing",
+  "other",
+] as const;
+
+export type LimitingFactor = (typeof LIMITING_FACTORS)[number];
+
+function factors(...entries: ReadonlyArray<readonly [LimitingFactor, string]>): ChoiceOption[] {
+  return entries.map(([value, label]) => ({ value, label }));
+}
+
+// ---------------------------------------------------------------------------
 // Shared field definitions
 // ---------------------------------------------------------------------------
 
@@ -165,7 +195,8 @@ const TECHNIQUE: ChoiceFieldSpec = {
   options: [
     { value: "clean", label: "Clean" },
     { value: "minor_compensation", label: "Minor compensation" },
-    { value: "breakdown", label: "Breakdown" },
+    { value: "major_compensation", label: "Major compensation" },
+    { value: "stopped_for_technique", label: "Stopped for technique" },
   ],
 };
 
@@ -177,7 +208,7 @@ const RPE: RpeFieldSpec = {
   hint: "1 = very easy, 10 = maximal.",
 };
 
-const HR = (key: string, label: string, required = false): NumberFieldSpec => ({
+const HR = (key: string, label: string, required = false, typical: readonly [number, number] = [40, 205]): NumberFieldSpec => ({
   kind: "number",
   key,
   label,
@@ -185,6 +216,7 @@ const HR = (key: string, label: string, required = false): NumberFieldSpec => ({
   min: 25,
   max: 250,
   decimals: 0,
+  typical,
   required,
   ...(required ? {} : { hint: "Optional. From a watch or chest strap." }),
 });
@@ -206,13 +238,13 @@ const STRENGTH_STOP: ChoiceFieldSpec = {
   label: "Why did you stop adding load?",
   required: true,
   stage: "finish",
-  options: [
-    { value: "effort", label: "Effort got high" },
-    { value: "technique", label: "Technique changed" },
-    { value: "no_heavier_load", label: "No heavier load available" },
-    { value: "voluntary", label: "Stopped by choice" },
-    { value: "pain", label: "Pain" },
-  ],
+  options: factors(
+    ["muscular_fatigue", "Effort got high"],
+    ["technique", "Technique changed"],
+    ["nothing", "Nothing — no heavier weight available"],
+    ["pain", "Pain"],
+    ["other", "Another reason"],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -281,6 +313,7 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         min: 0,
         max: 30,
         decimals: 1,
+        typical: [0, 20],
         required: true,
         hint: "Furthest distance where your knee still touches the wall with the heel down.",
       },
@@ -478,7 +511,7 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
       },
     ],
     attemptFields: [
-      { kind: "number", key: "reps", label: "Clean reps", unit: "reps", min: 0, max: 200, decimals: 0, required: true },
+      { kind: "number", key: "reps", label: "Clean reps", unit: "reps", min: 0, max: 200, decimals: 0, typical: [0, 70], required: true },
       RPE,
       TECHNIQUE,
       {
@@ -486,12 +519,12 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         key: "limiting_factor",
         label: "What stopped the set?",
         required: true,
-        options: [
-          { value: "technique", label: "Technique changed" },
-          { value: "fatigue", label: "Muscle fatigue" },
-          { value: "voluntary", label: "Stopped by choice" },
-          { value: "pain", label: "Pain" },
-        ],
+        options: factors(
+          ["technique", "Technique changed"],
+          ["muscular_fatigue", "Muscle fatigue"],
+          ["pain", "Pain"],
+          ["other", "Another reason"],
+        ),
       },
     ],
   },
@@ -637,13 +670,14 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         key: "limiting_factor",
         label: "What ended the carry?",
         required: true,
-        options: [
-          { value: "time_cap", label: "Reached 60 s" },
-          { value: "posture_failure", label: "Posture failed" },
-          { value: "grip_failure", label: "Grip failed" },
-          { value: "voluntary_stop", label: "Stopped by choice" },
-          { value: "pain", label: "Pain" },
-        ],
+        options: factors(
+          ["nothing", "Nothing — reached 60 s"],
+          ["grip", "Grip failed"],
+          ["technique", "Posture failed"],
+          ["muscular_fatigue", "Muscle fatigue"],
+          ["pain", "Pain"],
+          ["other", "Another reason"],
+        ),
       },
     ],
     timer: { placement: "attempt", mode: "stopwatch", seconds: 60, fillsField: "duration_s" },
@@ -664,12 +698,13 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         key: "limiting_factor",
         label: "What ended the hold?",
         required: true,
-        options: [
-          { value: "time_cap", label: "Reached 120 s" },
-          { value: "position_lost", label: "Position lost" },
-          { value: "voluntary_stop", label: "Stopped by choice" },
-          { value: "pain", label: "Pain" },
-        ],
+        options: factors(
+          ["nothing", "Nothing — reached 120 s"],
+          ["technique", "Position lost"],
+          ["muscular_fatigue", "Muscle fatigue"],
+          ["pain", "Pain"],
+          ["other", "Another reason"],
+        ),
       },
     ],
     timer: { placement: "attempt", mode: "stopwatch", seconds: 120, fillsField: "duration_s" },
@@ -686,7 +721,7 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
     resultFields: [],
     attemptFields: [
       {
-        ...HR("avg_hr_bpm", "Average heart rate"),
+        ...HR("avg_hr_bpm", "Average heart rate", false, [35, 110]),
         hint: "Optional. Leave empty if you don't wear a watch or strap.",
       },
     ],
@@ -709,6 +744,7 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         min: 50,
         max: 1500,
         decimals: 1,
+        typical: [250, 1000],
         required: true,
       },
       {
@@ -771,6 +807,7 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         min: 200,
         max: 8000,
         decimals: 1,
+        typical: [800, 6000],
         required: true,
       },
       {
@@ -812,14 +849,14 @@ export const TEST_CATALOG: Readonly<Record<TestKey, TestDefinition>> = {
         key: "limiting_factor",
         label: "What limited you?",
         required: true,
-        options: [
-          { value: "breath", label: "Breath" },
-          { value: "legs", label: "Legs" },
-          { value: "pacing", label: "Pacing" },
-          { value: "could_continue", label: "Nothing — could continue" },
-          { value: "pain", label: "Pain" },
-          { value: "other", label: "Other" },
-        ],
+        options: factors(
+          ["breath", "Breath"],
+          ["muscular_fatigue", "Legs / muscle fatigue"],
+          ["pacing", "Pacing"],
+          ["nothing", "Nothing — could continue"],
+          ["pain", "Pain"],
+          ["other", "Another reason"],
+        ),
       },
     ],
     timer: { placement: "execute", mode: "countdown", seconds: 1200, fillsField: "duration_s" },
@@ -860,26 +897,22 @@ export const SESSION_CATALOG: Readonly<Record<SessionKind, SessionDefinition>> =
 // ---------------------------------------------------------------------------
 
 export const RESOLUTION_REASONS = [
+  "cannot_perform_safely",
   "pain",
-  "unable",
-  "unsafe",
-  "fatigue",
-  "no_equipment",
-  "no_space",
-  "time",
+  "missing_equipment",
+  "environment_unavailable",
+  "does_not_know_technique",
   "other",
 ] as const;
 
 export type ResolutionReason = (typeof RESOLUTION_REASONS)[number];
 
 export const RESOLUTION_REASON_LABELS: Readonly<Record<ResolutionReason, string>> = {
+  cannot_perform_safely: "I can't do it safely",
   pain: "Pain",
-  unable: "I can't do this movement",
-  unsafe: "It doesn't feel safe",
-  fatigue: "Too tired right now",
-  no_equipment: "Missing equipment",
-  no_space: "Not enough space",
-  time: "No time right now",
+  missing_equipment: "Missing equipment",
+  environment_unavailable: "No suitable space or route",
+  does_not_know_technique: "I don't know the technique",
   other: "Other",
 };
 
@@ -899,7 +932,9 @@ export function isResultStatus(value: unknown): value is ResultStatus {
  */
 export function statusForReason(reason: ResolutionReason, started: boolean): Exclude<ResolvedStatus, "completed"> {
   if (started) return "aborted";
-  return reason === "pain" || reason === "unable" || reason === "unsafe" ? "cannot_perform" : "skipped";
+  return reason === "pain" || reason === "cannot_perform_safely" || reason === "does_not_know_technique"
+    ? "cannot_perform"
+    : "skipped";
 }
 
 export const PAIN_LOCATIONS: readonly ChoiceOption[] = [

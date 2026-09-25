@@ -520,6 +520,8 @@ function AttemptForm({
   const [pending, startTransition] = useTransition();
   // Stays busy after a successful save until the next attempt's form replaces this one.
   const [saved, setSaved] = useState(false);
+  // Valid but unusual values awaiting "Yes, that's correct" (ADR-023 §7).
+  const [confirm, setConfirm] = useState<Record<string, string>>({});
 
   // Restore unsaved input and any time handed over by the execute timer.
   useEffect(() => {
@@ -543,12 +545,16 @@ function AttemptForm({
       return next;
     });
     setErrors((current) => ({ ...current, [key]: "" }));
+    setConfirm((current) => {
+      const { [key]: _changed, ...rest } = current;
+      return rest;
+    });
   }
 
   const fields = visibleFields(test.attemptFields, { ...resultRaw, ...raw });
   const attemptTimer = test.timer?.placement === "attempt" ? test.timer : null;
 
-  function save() {
+  function save(confirmed: string[] = []) {
     setFormError(null);
     const setup = buildResultPatch({ ...test, resultFields: setupFields(test) }, resultRaw);
     if (!setup.ok) {
@@ -570,8 +576,13 @@ function AttemptForm({
         attemptNumber: slot.attemptNumber,
         raw,
         resultRaw,
+        confirmed,
       }));
       if (!saved.ok) {
+        if (saved.confirm) {
+          setConfirm(saved.confirm);
+          return;
+        }
         setErrors(saved.fieldErrors ?? {});
         setFormError(saved.error);
         return;
@@ -621,9 +632,24 @@ function AttemptForm({
             {formError}
           </p>
         ) : null}
-        <Button onClick={save} loading={pending || saved}>
-          {editing ? "Save changes" : `Save ${title.split(" · ")[0]?.toLowerCase() ?? "attempt"}`}
-        </Button>
+        {Object.keys(confirm).length > 0 ? (
+          <div className={styles.warning} role="alert">
+            {Object.entries(confirm).map(([key, message]) => (
+              <p key={key}>
+                <strong>{fields.find((f) => f.key === key)?.label ?? key}:</strong> {message}
+              </p>
+            ))}
+          </div>
+        ) : null}
+        {Object.keys(confirm).length > 0 ? (
+          <Button onClick={() => save(Object.keys(confirm))} loading={pending || saved}>
+            Yes, save these values
+          </Button>
+        ) : (
+          <Button onClick={() => save()} loading={pending || saved}>
+            {editing ? "Save changes" : `Save ${title.split(" · ")[0]?.toLowerCase() ?? "attempt"}`}
+          </Button>
+        )}
         {onCancel ? (
           <Button variant="ghost" onClick={onCancel}>
             Cancel

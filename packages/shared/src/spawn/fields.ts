@@ -287,3 +287,22 @@ const PAIN_KEYS = ["limiting_factor", "stop_reason"] as const;
 export function namesPainAsLimit(values: ReadonlyArray<Readonly<Record<string, unknown>>>): boolean {
   return values.some((record) => PAIN_KEYS.some((key) => record[key] === "pain"));
 }
+
+/**
+ * Values outside a field's typical range (ADR-023 §7). They are valid, but
+ * the athlete must confirm them before saving. Nothing is clamped.
+ */
+export function unusualValues(fields: readonly FieldSpec[], values: ParsedValues): FieldErrors {
+  const unusual: FieldErrors = {};
+  for (const field of fields) {
+    if ((field.kind !== "number" && field.kind !== "duration") || !field.typical) continue;
+    const value = values[field.key];
+    if (typeof value !== "number") continue;
+    const [low, high] = field.typical;
+    if (value < low || value > high) {
+      const unit = field.kind === "duration" ? "" : field.unit === "reps" ? " reps" : ` ${field.unit}`;
+      unusual[field.key] = `${value}${unit} is unusual for this test. Check it — if it's right, confirm to save.`;
+    }
+  }
+  return unusual;
+}

@@ -7,7 +7,14 @@ import type { createClient } from "@/lib/supabase/server";
 /** Result of a Spawn server action. `redirectTo` is where the client goes next. */
 export type ActionResult =
   | { ok: true; redirectTo?: string; id?: string }
-  | { ok: false; error: string; fieldErrors?: Record<string, string>; redirectTo?: string };
+  | {
+      ok: false;
+      error: string;
+      fieldErrors?: Record<string, string>;
+      redirectTo?: string;
+      /** Valid but unusual values the athlete must confirm (ADR-023 §7). */
+      confirm?: Record<string, string>;
+    };
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
