@@ -80,7 +80,7 @@ added later without schema changes.
 
 ## ADR-005 — Root route redirects to `/today` until Spawn exists
 
-**Status:** Accepted · Milestone 1 · Temporary
+**Status:** Superseded by ADR-010 · Milestone 1 · Temporary
 
 **Context.** §49: the authenticated root redirects according to Spawn state.
 Spawn state is Milestone 2.
@@ -160,3 +160,277 @@ ratios.
 
 **Consequences.** Token names and structure are unchanged. The difference is
 barely visible.
+
+---
+
+## ADR-010 — Root route resolves by Spawn state; app shell stays reachable
+
+**Status:** Accepted · Milestone 2 · Supersedes ADR-005
+
+**Context.** §49: the authenticated root redirects according to Spawn state.
+§25: during Spawn the normal shell is replaced by a focused flow. Spawn cannot
+reach `COMPLETE` until the M3 engine exists.
+
+**Decision.** `/` reads `athlete_settings.spawn_state` and the open session
+and redirects to the exact screen to resume (pure `resolveSpawnPath()`).
+Sign-in and sign-up land on `/`. Spawn screens use a focused layout with no
+bottom nav. The five app destinations are *not* hard-blocked during Spawn:
+Today shows a "Continue Spawn" card instead of an empty dashboard, and Profile
+stays reachable for sign-out and edits.
+
+**Consequences.** The athlete is never locked out of their account settings
+while M3 is pending. Hard-gating the shell can be added in M3 without schema
+changes.
+
+---
+
+## ADR-011 — Onboarding order: Profile → Body/Context → Spawn Point
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §59 lists `CREATE PROFILE → SPAWN POINT → BODY / CONTEXT`. §11
+says Spawn 0 captures body/context and *then* shows every attribute
+`UNRANKED`. The Milestone 2 brief uses the §11 order.
+
+**Decision.** Account → profile/body/context screens → Spawn Point (all
+`UNRANKED`, `BEGIN ASSESSMENT`) → Movement → Frame → Engine → Spawn Complete.
+
+**Consequences.** The Spawn Point marks the start of *measurement*, after all
+context has been collected. Changing the order later is a routing change only.
+
+---
+
+## ADR-012 — Spawn state semantics and enforcement
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §11 lists ten states but not their transitions.
+
+**Decision.**
+
+| State | Meaning | Left by |
+|---|---|---|
+| `NOT_STARTED` | account exists, no profile input | `START_PROFILE` |
+| `BODY_PROFILE` | onboarding screens in progress | `COMPLETE_CONTEXT` |
+| `MOVEMENT_PENDING` | Spawn Point shown; Movement available or in progress | `COMPLETE_MOVEMENT` |
+| `MOVEMENT_COMPLETE` | between sessions (rest days allowed, §59) | `BEGIN_FRAME` |
+| `FRAME_PENDING` | Frame session in progress | `COMPLETE_FRAME` |
+| `FRAME_COMPLETE` | between sessions | `BEGIN_ENGINE` |
+| `ENGINE_PENDING` | Engine session in progress | `COMPLETE_ENGINE` |
+| `ENGINE_COMPLETE` | Spawn Complete screen; all raw data collected | `REQUEST_CALIBRATION` |
+| `CALIBRATING` | waiting for the Stats Engine (M3) | `CALIBRATION_COMPLETE` (M3) |
+| `COMPLETE` | Stats initialised | — |
+
+Transitions are a pure function in `@ascend/shared`. Postgres enforces the
+same rule independently: `spawn_state` can only move exactly one step
+forward. The only way back is the development reset (ADR-019).
+
+**Consequences.** A stale tab or double tap cannot skip or rewind Spawn.
+`COMPLETE` is unreachable until M3.
+
+---
+
+## ADR-013 — `assessment_attempts` table in addition to §46
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §12–§14 require every attempt to be stored (e.g. M04: two
+attempts per side, M07: three attempts). §67 asks for searchable fields as
+relational columns. §46 lists `assessment_results` but no attempt table.
+
+**Decision.** `assessment_results` holds one row per test outcome (status,
+reason, variant, pain, source). `assessment_attempts` holds one row per
+attempt, set or side. Common measurements are typed columns with the SI unit
+in the name (`measure_cm`, `duration_s`, `distance_m`, `load_kg`, `reps`,
+`rpe`, `avg_hr_bpm`, `max_hr_bpm`, `avg_pace_s_per_km`, `technique`,
+`limiting_factor`). Test-specific categorical values (squat depth, heel
+position, errors, HR recovery readings) go in a JSON `data` object validated
+by the shared test catalog.
+
+**Consequences.** One extra table. Best-of values are never stored; the M3
+engine derives them from attempts.
+
+---
+
+## ADR-014 — Results are append-only once resolved
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §0.3/§47: raw measurements are preserved permanently. The
+athlete must still be able to fix a typo while entering a test, and retry a
+test they skipped.
+
+**Decision.** A result is editable only while `in_progress`. Once it becomes
+`completed`, `skipped`, `cannot_perform` or `aborted`, a trigger blocks every
+update and delete of the result and its attempts. Retrying a skipped or
+aborted test creates a *new* result row; the earlier row stays as history and
+the latest row per test counts. A completed test cannot be retried inside the
+same Spawn session (later: `VERIFY [ATTRIBUTE]`, §65). Composite foreign keys
+`(id, athlete_id)` stop a row from pointing at another athlete's parent row
+(FK checks bypass RLS).
+
+**Consequences.** No correction flow for confirmed results in M2; §5 allows
+"explicit correction/audit", which is a later feature.
+
+---
+
+## ADR-015 — Performance evidence rows carry raw data only in M2
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §5 defines `PerformanceEvidence` with `quality`,
+`evidenceWeight` and `engineVersion`. Those are engine judgements (§54
+engine configuration), and M2 has no engine.
+
+**Decision.** A trigger writes one `performance_evidence` row (source
+`spawn_test`) when a result is completed, with a snapshot of the result and
+its attempts in `raw_payload`. `quality`, `evidence_weight` and
+`engine_version` are nullable and left null. Skipped, cannot-perform and
+aborted results create no evidence. Clients can read evidence but not write
+it.
+
+**Consequences.** Unknown stays unknown (§72.1). M3 records its weighting in
+its own derived tables with an engine version and does not need to modify
+raw evidence.
+
+---
+
+## ADR-016 — Pain is recorded per test and always becomes a Movement Flag
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §0.12, §53, §72.4: pain is not poor performance. M01 records a
+pain flag with an optional location and note; E04 lists `pain` as a limiting
+factor.
+
+**Decision.** Every test offers "Any pain during this test?" on its confirm
+screen, and every test can be stopped with the reason `pain`. A trigger
+creates a `movement_flags` row whenever a result is resolved with pain
+reported or with reason `pain`. Choosing the limiting factor `pain` turns the
+pain question on, visibly, so the athlete can review it before confirming.
+Stopped tests keep the attempts recorded so far but produce no evidence.
+
+**Consequences.** Pain never becomes a zero. Flags are resolved by the athlete
+later (status `open` → `resolved`).
+
+---
+
+## ADR-017 — Option sets and bounds the spec leaves open
+
+**Status:** Proposed · Milestone 2 · needs product review
+
+**Context.** The spec defines what to record but not every option list or
+input bound.
+
+**Decision.** These live in one place, `packages/shared/src/spawn/catalog.ts`
+and `packages/shared/src/profile/options.ts`, and are listed in the Milestone
+2 report for review:
+
+- Frame technique: `clean` / `minor_compensation` / `breakdown`.
+- Frame limiting factors per test (e.g. farmer carry: posture failure, grip
+  failure, voluntary stop, time cap reached, pain — from §13).
+- M03 gap categories: overlap / fingertips touch / gap within a hand's
+  length / gap beyond a hand's length, plus optional signed centimetres.
+- Skip reasons and whether each maps to `skipped` or `cannot_perform`.
+- Training experience and recent-inactivity choices.
+- Environment and data-source lists; equipment reference list (§58 items
+  included).
+- Plausibility bounds (e.g. HR 25–250 bpm, height 100–250 cm, weight
+  30–350 kg, 6-minute walk ≤ 1,500 m, 20-minute run/walk ≤ 8,000 m). They
+  reject typos; they are not medical validation.
+- Estimated Engine session duration (~45 min; §14 gives none).
+
+**Consequences.** Changing any of them is a data change in one file plus the
+matching DB check where one exists.
+
+---
+
+## ADR-018 — Session completion shows data coverage, not scores
+
+**Status:** Accepted · Milestone 2
+
+**Context.** The brief asks for "Mobility — CALIBRATION DATA COLLECTED /
+Core — PARTIALLY ASSESSED" after a session, with no Stats.
+
+**Decision.** Coverage is derived from the §15 subdomains that Spawn can
+measure, mapped to tests (e.g. Core: anti-extension M06, bracing F06, loaded
+stability F05). An attribute is *collected* when every Spawn-measurable
+subdomain has a completed test, *partial* when some do, *not assessed* when
+none do. Power has no Spawn test (§13) and is shown as not assessed in Spawn.
+The mapping is display data in `@ascend/shared`; M3 engine configuration
+becomes its source of truth.
+
+**Consequences.** Honest progress feedback without numbers.
+
+---
+
+## ADR-019 — Development-only Spawn reset
+
+**Status:** Accepted · Milestone 2
+
+**Context.** The onboarding must be repeatable during development. Raw
+results are immutable by design, so a reset needs a privileged path that must
+never exist in production.
+
+**Decision.** `public.dev_reset_spawn(keep_context boolean)` is a
+`security definer` function that deletes the caller's own Spawn data. It
+raises unless `private.environment_flags` contains `dev_tools = enabled`, a
+row that only `supabase/seed.sql` inserts (seed runs on local `db reset`,
+never on the hosted project). The server action and the UI that call it
+only exist when `NODE_ENV === "development"`.
+
+**Consequences.** Two independent guards. In production the RPC exists but
+always refuses.
+
+---
+
+## ADR-020 — Manual entry first, wearable-ready shape
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §24: v0.1 works without HealthKit; the browser cannot read
+Apple Health.
+
+**Decision.** Engine tests are entered manually. Results carry `source`
+(`manual` | `wearable`) and `source_ref` (an import id), so a future
+`HealthDataProvider` import can create the same result rows with different
+provenance. HR fields are optional wherever the spec says "if available";
+E03 heart-rate recovery needs HR readings and can be marked "cannot perform"
+with reason `no_equipment` when no HR device is available.
+
+**Consequences.** No provider code in M2.
+
+---
+
+## ADR-021 — Body measurements: one row per measurement, explicit unit
+
+**Status:** Accepted · Milestone 2
+
+**Context.** §10 lists weight, body fat and circumferences; §46 asks for
+explicit units; M7 adds a timeline.
+
+**Decision.** `body_measurements` stores one row per `kind` with a `unit`
+column constrained to the kind (kg, percent, cm). Height is a profile field
+(it rarely changes). Values entered during Spawn onboarding use
+`context = 'spawn'` and are edited in place until onboarding completes —
+they are form input, not assessment results. Later entries append.
+
+**Consequences.** M7 can add a timeline without migration.
+
+---
+
+## ADR-022 — Tight column grants; no PostgREST upserts
+
+**Status:** Accepted · Milestone 2
+
+**Context.** Clients may not update identity columns (`athlete_id`,
+`result_id`, `weekday`, `side`, `attempt_number`). A PostgREST upsert
+rewrites every column in its payload, which needs UPDATE on those columns.
+
+**Decision.** Keep the narrow grants. Server actions look the row up and
+issue an explicit `update` or `insert` instead of `upsert`. A pgTAP test
+asserts that every column the app inserts is granted, so a missing grant
+fails in CI instead of in the athlete's hands.
+
+**Consequences.** One extra round trip on a few writes. Ownership and
+identity columns stay immutable from the client.

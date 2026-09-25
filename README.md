@@ -30,6 +30,12 @@ cp apps/web/.env.example apps/web/.env.local
 npm run dev                          # http://localhost:3000
 ```
 
+`supabase db reset` applies migrations and `supabase/seed.sql`. The seed enables
+the development-only Spawn reset (ADR-019): under `npm run dev`, Profile and
+Spawn Complete show **Reset assessments** / **Reset all of Spawn** for the
+signed-in account. Production builds never render it, and the hosted database
+refuses it.
+
 Regenerate database types after a migration:
 
 ```bash
