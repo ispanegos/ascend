@@ -24,7 +24,7 @@ const SHOTS = process.env.SPAWN_SCREENSHOTS;
 
 /** Viewport screenshot for the report, after entrance animations settle. */
 async function shot(page: Page, name: string) {
-  if (!SHOTS) return;
+  if (!SHOTS || page.viewportSize()?.width !== 390) return;
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
@@ -34,7 +34,8 @@ test.describe("Spawn journey", () => {
   test.setTimeout(240_000);
 
   test("profile → Spawn Point → Movement → Frame → Engine → Spawn Complete, with resume", async ({ page, browser }, testInfo) => {
-    test.skip(testInfo.project.name !== "phone-390", "full journey runs at the 390 px design width");
+    // The design width, plus the narrowest supported width with real numbers on screen.
+    test.skip(!["phone-390", "phone-320"].includes(testInfo.project.name), "full journey runs at 390 and 320 px");
     const credentials = await signUpFresh(page);
     await completeOnboarding(page);
 
@@ -212,7 +213,7 @@ test.describe("Spawn journey", () => {
     await choose(page, "Technique", "Clean");
     await press(page, "Save set 1");
     await press(page, "Review and confirm");
-    await choose(page, "Why did you stop adding load?", "No heavier load available");
+    await choose(page, "Why did you stop adding load?", "Nothing — no heavier weight available");
     await choose(page, "Any pain during this test?", "No");
     await press(page, "Confirm result");
 
@@ -293,12 +294,45 @@ test.describe("Spawn journey", () => {
     await expect(final.getByRole("listitem").filter({ hasText: "Power" })).toContainText("Not assessed in Spawn");
     await expect(final.getByRole("listitem").filter({ hasText: "Endurance" })).toContainText("Data collected");
     await shot(page, "05-spawn-complete");
+    // ---- Initialize: the real engine runs on the raw evidence.
+    if (SHOTS) {
+      // Hold the server action briefly so the initializing screen can be captured.
+      await page.route("**/spawn/complete", async (route) => {
+        if (route.request().method() === "POST") await new Promise((r) => setTimeout(r, 1500));
+        await route.continue();
+      });
+    }
     await press(page, "Initialize athlete profile");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Calibration pending.");
+    await expect(page.getByText("Initializing.")).toBeVisible();
+    await shot(page, "06-initializing");
+    await expect(page.getByRole("heading", { level: 1, name: "Initialized." })).toBeVisible({ timeout: 20_000 });
+    await page.unrouteAll();
 
-    // Root now resumes at Spawn Complete; completed results can't be reopened.
+    const statList = page.getByRole("region", { name: "Athlete Stats" });
+    await expect(statList.getByRole("link", { name: /^Power\s*—\s*Unranked/ })).toBeVisible();
+    for (const name of ["Endurance", "Strength", "Core", "Mobility", "Agility"]) {
+      // Rounded integer + status + confidence, never a decimal.
+      await expect(statList.getByRole("link", { name: new RegExp(`^${name}\\s*\\d{1,3}\\s*(Verified|Provisional) · \\d{1,3}%`) })).toBeVisible();
+    }
+    await expect(statList).not.toContainText(/\d\.\d/); // integers only; decimals stay internal
+    await expectNoHorizontalOverflow(page);
+    await expectTouchTargets(page);
+    await expect(page.getByText(/provisional calibration/)).toBeVisible();
+    await shot(page, "07-initialized");
+
+    // Stat detail foundation: Current, Peak, Confidence, why, evidence.
+    await statList.getByRole("link", { name: /^Endurance/ }).click();
+    await expect(page).toHaveURL(/\/stats\/endurance$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Endurance" })).toBeVisible();
+    await expect(page.getByText("Pace distance")).toBeVisible();
+    await expect(page.getByRole("listitem").filter({ hasText: "Spawn · E04" })).toContainText("20-Minute Run/Walk");
+    await expectNoHorizontalOverflow(page);
+    await shot(page, "08-stat-detail");
+
+    // The shell is unlocked; root resumes at Today.
     await page.goto("/");
-    await expect(page).toHaveURL(/\/spawn\/complete$/);
+    await expect(page).toHaveURL(/\/today$/);
+    await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
     await page.goto("/spawn/movement/m01");
     await expect(page.getByText("Recorded", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Try this test now" })).toHaveCount(0);
@@ -306,6 +340,47 @@ test.describe("Spawn journey", () => {
 });
 
 test.describe("onboarding resume and validation", () => {
+  test("the main shell is locked during Spawn; Profile stays reachable", async ({ page }) => {
+    await signUpFresh(page, "Locked Athlete");
+    for (const path of ["/today", "/stats", "/ascend", "/bosses", "/stats/strength"]) {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
+    }
+    await page.goto("/profile");
+    await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Back to Spawn" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  });
+
+  test("an under-18 date of birth is refused (ADR-023)", async ({ page }) => {
+    await signUpFresh(page, "Young Athlete");
+    await press(page, "Create profile");
+    await press(page, "Continue");
+    const year = new Date().getFullYear() - 17;
+    await page.getByLabel("Date of birth").fill(`${year}-01-01`);
+    await press(page, "Continue");
+    await expect(page.getByText("ASCEND v0.1 is for athletes aged 18 and over.")).toBeVisible();
+  });
+
+  test("an unusual weight needs confirmation and is never changed", async ({ page }) => {
+    await signUpFresh(page, "Heavy Athlete");
+    await press(page, "Create profile");
+    await press(page, "Continue");
+    await page.getByLabel("Date of birth").fill("1985-03-03");
+    await press(page, "Continue");
+    await page.getByRole("radio", { name: "Prefer not to say" }).check();
+    await press(page, "Continue");
+    await page.getByLabel("Height").fill("190");
+    await press(page, "Continue");
+    await page.getByLabel("Weight").fill("228");
+    await press(page, "Continue");
+    await expect(page.getByText("228 kg is unusual.", { exact: false })).toBeVisible();
+    await expect(page.getByLabel("Weight")).toHaveValue("228");
+    await press(page, "Yes, that's correct");
+    await expectStep(page, "body-fat");
+  });
+
   test("resumes at the last onboarding step after reload and sign-in", async ({ page }) => {
     const credentials = await signUpFresh(page, "Resume Athlete");
     await press(page, "Create profile");

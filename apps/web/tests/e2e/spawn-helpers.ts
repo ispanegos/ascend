@@ -76,11 +76,11 @@ export async function completeOnboarding(page: Page) {
   await press(page, "Continue");
 
   await expectStep(page, "experience");
-  await page.getByRole("radio", { name: "1–3 years" }).check();
+  await page.getByRole("radio", { name: "Recreational" }).check();
   await press(page, "Continue");
 
   await expectStep(page, "activity");
-  await page.getByRole("radio", { name: "Stopped more than a year ago" }).check();
+  await page.getByRole("radio", { name: "More than a year off" }).check();
   await press(page, "Continue");
 
   await expectStep(page, "equipment");
@@ -147,14 +147,17 @@ export async function confirm(page: Page, pain: "No" | "Yes" = "No", location?: 
   await press(page, "Confirm result");
 }
 
-/** Resolves every remaining test of the open session with "No time right now". */
+/** Resolves every remaining test of the open session with "Missing equipment". */
 export async function skipRemaining(page: Page, count: number) {
   for (let i = 0; i < count; i += 1) {
-    const before = page.url();
+    const heading = await page.getByRole("heading", { level: 1 }).textContent();
     await press(page, "I can't do this test");
-    await page.getByRole("dialog").getByRole("radio", { name: "No time right now" }).check();
-    await page.getByRole("dialog").getByRole("button", { name: "Skip for now" }).click();
-    await expect(page).not.toHaveURL(before);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("radio", { name: "Missing equipment" }).check();
+    await dialog.getByRole("button", { name: "Skip for now" }).click();
+    // Wait until the next screen has actually rendered, not just the URL.
+    await expect(page.getByRole("heading", { level: 1 })).not.toHaveText(heading ?? "");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   }
 }
 
@@ -163,4 +166,29 @@ export async function saveAttempt(page: Page, button: string, next?: string) {
   await press(page, button);
   if (next) await expect(page.getByRole("heading", { name: next, exact: true })).toBeVisible();
   else await expect(page.getByRole("button", { name: "Review and confirm" })).toBeVisible();
+}
+
+/** Begins a session and skips every test, then finishes it. */
+export async function finishSessionBySkipping(page: Page, title: string, tests: number) {
+  await beginSession(page, title);
+  await skipRemaining(page, tests);
+  await press(page, `Finish ${title}`);
+  await expect(page.getByRole("heading", { level: 1, name: `${title} complete` })).toBeVisible();
+}
+
+/**
+ * Fastest honest path to an initialized athlete: real onboarding, every test
+ * skipped with a reason, then initialization. All Stats stay unranked.
+ */
+export async function completeSpawnBySkipping(page: Page) {
+  await completeOnboarding(page);
+  await page.getByRole("link", { name: "Begin assessment" }).click();
+  await finishSessionBySkipping(page, "Movement", 7);
+  await page.getByRole("link", { name: "Continue to The Frame" }).click();
+  await finishSessionBySkipping(page, "The Frame", 6);
+  await page.getByRole("link", { name: "Continue to The Engine" }).click();
+  await finishSessionBySkipping(page, "The Engine", 4);
+  await page.getByRole("link", { name: "Continue", exact: true }).click();
+  await press(page, "Initialize athlete profile");
+  await expect(page.getByRole("heading", { level: 1, name: "Initialized." })).toBeVisible({ timeout: 20_000 });
 }

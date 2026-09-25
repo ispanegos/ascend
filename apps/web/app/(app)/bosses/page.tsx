@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { EmptyState } from "@/components/ui/States";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { requireInitializedAthlete } from "@/features/spawn/guard";
 
 export const metadata: Metadata = { title: "Bosses" };
 
-export default function BossesPage() {
+export default async function BossesPage() {
+  await requireInitializedAthlete();
   return (
     <>
       <PageHeader title="Bosses" />

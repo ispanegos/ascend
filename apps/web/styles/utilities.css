@@ -149,3 +149,24 @@
 .app-page--flow {
   padding-top: 0;
 }
+
+/* Shell during Spawn/Calibration: no bottom nav, one way back (ADR-023 §9). */
+.locked-shell {
+  padding: calc(env(safe-area-inset-top) + var(--space-2)) var(--mobile-gutter) 0;
+}
+
+.locked-shell__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-min);
+  padding-right: var(--space-3);
+  color: var(--color-ink);
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.app-page--locked {
+  padding-top: var(--space-4);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--space-8));
+}

@@ -17,6 +17,8 @@ import {
   statusForReason,
   testsForSession,
   toResultSummaries,
+  unusualValues,
+  validateFields,
   type RawValues,
   type ResolutionReason,
   type SessionKind,
@@ -27,7 +29,10 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { devToolsEnabled } from "@/lib/dev";
 import type { Json } from "@/lib/supabase/database.types";
+import { createEngineWriter } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { buildEngineInput } from "../engine/input";
+import { EngineError, engineRegistration, runEngine } from "../engine/runner";
 import { getSpawnSnapshot } from "./data";
 import { SPAWN_COMPLETE_PATH, sessionPath, testPath } from "./routing";
 import { advanceSpawn, type ActionResult } from "./state";
@@ -247,6 +252,8 @@ export interface AttemptInput {
   attemptNumber: number;
   raw: Record<string, string>;
   resultRaw: Record<string, string>;
+  /** Unusual values the athlete has explicitly confirmed. */
+  confirmed?: string[] | undefined;
 }
 
 /** Saves one attempt/set/side. Only possible while the result is in progress. */
@@ -271,6 +278,15 @@ export async function saveAttempt(input: AttemptInput): Promise<ActionResult> {
   const built = buildAttemptRecord(test, toRaw(input.raw), resultRaw, slotSide);
   if (!built.ok) return { ok: false, error: "Check the highlighted fields.", fieldErrors: built.errors };
   const { record } = built;
+
+  const { values } = validateFields(test.attemptFields, toRaw(input.raw), resultRaw);
+  const confirmed = new Set(Array.isArray(input.confirmed) ? input.confirmed : []);
+  const unconfirmed = Object.fromEntries(
+    Object.entries(unusualValues(test.attemptFields, values)).filter(([key]) => !confirmed.has(key)),
+  );
+  if (Object.keys(unconfirmed).length > 0) {
+    return { ok: false, error: "Some values are unusual. Check them, then confirm.", confirm: unconfirmed };
+  }
 
   const row = {
     ...record.columns,
@@ -487,17 +503,42 @@ export async function retryTest(sessionId: string, testKey: string): Promise<Act
 // ---------------------------------------------------------------------------
 
 /**
- * Temporary Milestone 2 action behind "INITIALIZE ATHLETE PROFILE". Marks
- * Spawn as waiting for calibration; Milestone 3 replaces this with a call to
- * the Stats Engine. It computes nothing.
+ * INITIALIZE ATHLETE PROFILE (brief §11):
+ * Spawn Complete → CALIBRATING → read immutable raw evidence → ASCEND Engine
+ * → persist versioned snapshots → COMPLETE.
+ *
+ * Idempotent: the engine is deterministic and the database returns the
+ * existing calculation for unchanged evidence under the same engine version.
+ * If the engine fails, Spawn stays CALIBRATING and the athlete can retry.
  */
-export async function requestCalibration(): Promise<ActionResult> {
+export async function initializeAthleteProfile(): Promise<ActionResult> {
   const { user, supabase } = await context();
-  const result = await advanceSpawn(supabase, user.id, "REQUEST_CALIBRATION", {
+  const moved = await advanceSpawn(supabase, user.id, "REQUEST_CALIBRATION", {
     allowAlreadyPast: true,
     patch: { calibration_requested_at: new Date().toISOString() },
   });
-  if (!result.ok) return result;
+  if (!moved.ok) return moved;
+
+  try {
+    const input = await buildEngineInput(supabase, user.id);
+    const [result, registration] = await Promise.all([runEngine(input), engineRegistration()]);
+    if (result.athlete_id !== user.id) throw new EngineError("Engine result is for a different athlete.");
+
+    const { error } = await createEngineWriter().rpc("engine_record_calculation", {
+      p_athlete_id: user.id,
+      p_reason: "spawn_initialization",
+      p_result: result as unknown as Json,
+      p_engine: registration as unknown as Json,
+    });
+    if (error) throw new EngineError(error.message);
+  } catch (error) {
+    console.error("Athlete initialization failed", error instanceof Error ? error.message : error);
+    return {
+      ok: false,
+      error: "Calibration didn't finish. Your Spawn data is safe — try again.",
+    };
+  }
+
   revalidatePath("/", "layout");
   return { ok: true, redirectTo: SPAWN_COMPLETE_PATH };
 }

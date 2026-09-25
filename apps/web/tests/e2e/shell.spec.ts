@@ -29,6 +29,15 @@ test.describe("authenticated shell", () => {
     });
   }
 
+  test("Stat detail and paths fit the viewport", async ({ page }) => {
+    for (const path of ["/stats/strength", "/stats/power", "/ascend/paths", "/spawn/complete"]) {
+      await page.goto(path);
+      await expect(page.locator("h1")).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+      await expectTouchTargets(page);
+    }
+  });
+
   test("bottom navigation moves between all destinations", async ({ page }) => {
     await page.goto("/today");
     const nav = page.getByRole("navigation", { name: "Primary" });
@@ -53,14 +62,9 @@ test.describe("authenticated shell", () => {
     expect(buttonBox!.y + buttonBox!.height).toBeLessThanOrEqual(navBox!.y);
   });
 
-  test("signed-in users are sent away from sign-in, to where Spawn resumes", async ({ page }) => {
+  test("signed-in, initialized athletes are sent from sign-in to Today", async ({ page }) => {
     await page.goto("/sign-in");
-    await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
-  });
-
-  test("Today points back into Spawn instead of showing an empty dashboard", async ({ page }) => {
-    await page.goto("/today");
-    await expect(page.getByRole("link", { name: "Continue Spawn" })).toBeVisible();
+    await expect(page).toHaveURL(/\/today$/);
   });
 
   test("profile reads the athlete's own row through RLS", async ({ page }) => {
