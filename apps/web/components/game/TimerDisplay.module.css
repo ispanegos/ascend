@@ -1,0 +1,58 @@
+.wrap {
+  position: relative;
+  width: min(100%, 300px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.track,
+.fill {
+  fill: none;
+  stroke-width: 3;
+}
+
+.track {
+  stroke: var(--bg-track);
+}
+
+.fill {
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--duration-slow) var(--ease-out);
+}
+
+.data .fill {
+  stroke: var(--accent-data);
+  filter: drop-shadow(0 0 3px rgba(37, 199, 232, 0.5));
+}
+
+.gold .fill {
+  stroke: var(--accent-primary);
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.time {
+  font-size: var(--text-timer-size);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+.caption {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}

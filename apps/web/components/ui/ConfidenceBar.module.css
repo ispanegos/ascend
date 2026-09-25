@@ -1,0 +1,25 @@
+.bar {
+  display: inline-grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  width: 60px;
+  height: 6px;
+  flex: none;
+}
+
+.segment {
+  border-radius: 1px;
+  background: var(--bg-track);
+}
+
+.provisional .on {
+  background: var(--status-provisional);
+}
+
+.verified .on {
+  background: var(--status-verified);
+}
+
+.unranked .on {
+  background: var(--status-unranked);
+}

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import styles from "./PageHeader.module.css";
+import styles from "./ScreenHeader.module.css";
 
-interface PageHeaderProps {
+interface ScreenHeaderProps {
   /** Small uppercase context label, e.g. the date on Today. */
   eyebrow?: ReactNode;
   title: string;
@@ -10,13 +10,16 @@ interface PageHeaderProps {
   aside?: ReactNode;
 }
 
-/** Page title block. Renders the page's single `h1` (spec §40). */
-export function PageHeader({ eyebrow, title, description, aside }: PageHeaderProps) {
+/**
+ * Screen title block: condensed uppercase title like a game menu, still the
+ * page's single `h1` (V2 §7, §25).
+ */
+export function ScreenHeader({ eyebrow, title, description, aside }: ScreenHeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.titles}>
-        {eyebrow ? <p className="text-label text-muted">{eyebrow}</p> : null}
-        <h1 className="text-h1">{title}</h1>
+        {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
+        <h1 className={styles.title}>{title}</h1>
         {description ? <p className={styles.description}>{description}</p> : null}
       </div>
       {aside ? <div className={styles.aside}>{aside}</div> : null}

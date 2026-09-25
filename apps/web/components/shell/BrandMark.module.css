@@ -1,26 +1,50 @@
 .mark {
   display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.row {
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-ink-strong);
 }
 
 .glyph {
-  width: 28px;
-  height: 28px;
+  color: var(--accent-primary);
 }
 
 .word {
+  font-family: var(--font-fantasy);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  font-size: 0.9375rem;
-}
-
-.lg .glyph {
-  width: 40px;
-  height: 40px;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  background: linear-gradient(180deg, var(--accent-primary-bright) 10%, var(--accent-primary) 55%, var(--accent-primary-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .lg .word {
-  font-size: 1.125rem;
+  font-size: 1.75rem;
+}
+
+.xl .word {
+  font-size: clamp(2.5rem, 13vw, 3rem);
+}
+
+.tagline {
+  font-family: var(--font-fantasy);
+  font-size: var(--text-meta-size);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--text-display);
+}
+
+@media (forced-colors: active) {
+  .word {
+    color: CanvasText;
+    background: none;
+  }
 }

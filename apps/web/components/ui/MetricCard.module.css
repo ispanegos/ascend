@@ -1,0 +1,54 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.label {
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.valueRow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.valueRow svg {
+  align-self: center;
+}
+
+.value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.unit {
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-small-size);
+  color: var(--text-secondary);
+}
+
+.data .value {
+  color: var(--accent-data);
+}
+
+.gold .value {
+  color: var(--accent-primary);
+}
+
+.neutral .value {
+  color: var(--text-primary);
+}

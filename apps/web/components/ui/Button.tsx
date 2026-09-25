@@ -3,13 +3,21 @@ import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { cx } from "@/lib/cx";
 import styles from "./Button.module.css";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+/**
+ * primary   — dark amber, gold edge: the one key action on a screen
+ * secondary — dark surface, subtle border
+ * ghost     — text only, for low-emphasis alternatives
+ * danger    — destructive or stopping actions
+ * boss      — Boss encounters only
+ * success   — restrained confirmation
+ */
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "boss" | "success";
 
 interface CommonProps {
   variant?: ButtonVariant;
   /**
-   * Full width is the mobile default for primary flows (spec §32). Desktop
-   * may shrink to content via `fit="auto"`.
+   * Full width is the mobile default for primary flows. Desktop may shrink
+   * to content via `fit="auto"`.
    */
   fit?: "full" | "auto";
   children: ReactNode;

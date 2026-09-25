@@ -7,24 +7,45 @@
 
 .track {
   flex: 1;
-  height: 4px;
   min-width: 48px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-subtle);
+  border-radius: var(--radius-xs);
+  background: var(--bg-track);
   overflow: hidden;
+}
+
+.sm {
+  height: 4px;
+}
+
+.md {
+  height: 8px;
 }
 
 .fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--color-brand);
-  transition: width var(--duration-slow) var(--ease-standard);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.gold {
+  background: linear-gradient(90deg, var(--accent-primary-dark), var(--accent-primary), var(--accent-primary-bright));
+}
+
+.data {
+  background: linear-gradient(90deg, var(--ascend-teal), var(--accent-data));
+}
+
+.success {
+  background: var(--accent-success);
+}
+
+.boss {
+  background: linear-gradient(90deg, var(--boss-accent), var(--boss-accent-bright));
 }
 
 .text {
   flex: none;
-  color: var(--color-ink-muted);
+  color: var(--text-secondary);
   font-size: var(--text-meta-size);
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }

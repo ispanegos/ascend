@@ -1,19 +1,38 @@
-/* Spec §32. No nested cards on mobile (§31). */
+/* Design System V2 §11. */
 
 .card {
+  position: relative;
   min-width: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.dense {
+  padding: var(--space-3);
 }
 
 .raised {
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
 }
 
 .subtle {
-  background: var(--color-surface-subtle);
+  background: var(--bg-sunken);
   border-color: transparent;
+}
+
+.highlight {
+  border-color: var(--border-highlight);
+  box-shadow: inset 0 1px 0 rgba(255, 212, 122, 0.08);
+}
+
+.boss {
+  background: linear-gradient(180deg, var(--boss-surface), var(--boss-bg));
+  border-color: var(--border-boss);
+}
+
+.data {
+  border-color: var(--border-data);
 }

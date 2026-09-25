@@ -1,0 +1,176 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-boss);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--boss-surface), var(--boss-bg) 60%);
+  color: var(--boss-text);
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--boss-accent-bright);
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-label-size);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.frame {
+  width: min(100%, 320px);
+  margin-inline: auto;
+}
+
+.art {
+  transition: filter var(--duration-moment) var(--ease-standard);
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.name {
+  font-size: clamp(1.5rem, 7vw, 1.875rem);
+  line-height: 1.1;
+  color: var(--boss-name);
+}
+
+.meaning {
+  color: var(--boss-text-muted);
+}
+
+.readiness {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.readinessTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.readinessLabel,
+.reqHeading {
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-label-size);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--boss-text-muted);
+}
+
+.readinessValue {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--boss-text);
+}
+
+.note {
+  color: var(--boss-text-muted);
+  font-size: var(--text-meta-size);
+}
+
+.reqHeading {
+  margin-bottom: var(--space-2);
+}
+
+.reqs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.req {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.req > svg:last-child {
+  color: var(--boss-text-muted);
+}
+
+.met > svg:last-child {
+  color: var(--status-verified);
+}
+
+.reqName {
+  min-width: 0;
+}
+
+.reqOf {
+  color: var(--boss-text-muted);
+}
+
+/* States through light: dormant → awake → defeated. */
+.undiscovered .art {
+  filter: grayscale(0.85) brightness(0.45);
+}
+
+.undiscovered {
+  border-color: var(--border-strong);
+  background: var(--bg-card);
+}
+
+.available .art,
+.attempted .art {
+  filter: saturate(0.85) brightness(0.9);
+}
+
+.ready {
+  box-shadow: var(--glow-boss);
+}
+
+.not-defeated .art,
+.recoil .art {
+  filter: saturate(0.6) brightness(0.7);
+}
+
+.revenge {
+  border-color: var(--boss-accent-bright);
+  box-shadow: 0 0 0 1px rgba(243, 178, 79, 0.25), var(--glow-boss);
+}
+
+.revenge .art {
+  filter: saturate(1.25) brightness(1.05);
+}
+
+.defeated {
+  border-color: var(--border-success);
+}
+
+.defeated .art {
+  filter: grayscale(0.6) brightness(0.55);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ready .art,
+  .revenge .art {
+    animation: breathe 4s ease-in-out infinite;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    filter: saturate(1.2) brightness(1.1);
+  }
+}

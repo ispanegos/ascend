@@ -1,4 +1,4 @@
-/* Spec §32 primary button, extended to secondary / ghost / danger. */
+/* Design System V2 §13. Modern controls with a restrained fantasy edge. */
 
 .button {
   position: relative;
@@ -9,18 +9,23 @@
   width: 100%;
   min-height: var(--control-height);
   border: 1px solid transparent;
-  border-radius: var(--radius-pill);
-  padding: 0 22px;
-  font-weight: 650;
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-5);
+  font-family: var(--font-product-condensed);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
+  text-transform: uppercase;
   cursor: pointer;
   user-select: none;
   transition:
     transform var(--duration-fast) var(--ease-standard),
     background var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
 }
 
 .button:active:not(:disabled) {
@@ -38,38 +43,59 @@
   padding-block: var(--space-2);
 }
 
+/* Primary: dark amber, thin gold border, warm inner highlight, cream text. */
 .primary {
-  background: var(--color-brand);
-  color: var(--color-on-brand);
+  background: var(--button-primary-bg);
+  border-color: var(--button-primary-border);
+  color: var(--button-primary-text);
+  box-shadow: var(--button-primary-highlight);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-brand-strong);
+  background: var(--button-primary-bg-hover);
+  box-shadow: var(--button-primary-highlight), var(--glow-primary);
 }
 
 .secondary {
-  background: var(--color-surface-raised);
-  border-color: var(--color-border-strong);
-  color: var(--color-ink);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 .secondary:hover:not(:disabled) {
-  border-color: var(--color-brand);
+  border-color: var(--border-highlight);
 }
 
 .ghost {
   background: transparent;
-  color: var(--color-brand);
+  color: var(--accent-primary);
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--color-surface-subtle);
+  background: var(--accent-primary-soft);
 }
 
 .danger {
-  background: transparent;
-  border-color: var(--color-danger);
-  color: var(--color-danger);
+  background: var(--accent-danger-soft);
+  border-color: var(--border-boss);
+  color: var(--accent-danger-text);
+}
+
+.boss {
+  background: var(--button-boss-bg);
+  border-color: var(--boss-accent-bright);
+  color: var(--boss-name);
+  box-shadow: inset 0 1px 0 rgba(240, 120, 69, 0.25);
+}
+
+.boss:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(240, 120, 69, 0.25), var(--glow-boss);
+}
+
+.success {
+  background: var(--button-success-bg);
+  border-color: var(--border-success);
+  color: var(--accent-success);
 }
 
 .auto {

@@ -1,20 +1,20 @@
-import type { IconName } from "@/components/ui/Icon";
+import type { PixelIconName } from "@/components/ui/PixelIcon";
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: IconName;
-  /** The central primary destination (spec §25). */
+  icon: PixelIconName;
+  /** The central primary destination. */
   primary?: boolean;
 }
 
-/** Primary mobile navigation — 5 destinations maximum (spec §25). */
+/** Primary navigation (Design System V2 §4): Today · Quests · ASCEND · Stats · You. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/today", label: "Today", icon: "today" },
-  { href: "/stats", label: "Stats", icon: "stats" },
+  { href: "/quests", label: "Quests", icon: "quest" },
   { href: "/ascend", label: "Ascend", icon: "ascend", primary: true },
-  { href: "/bosses", label: "Bosses", icon: "boss" },
-  { href: "/profile", label: "Profile", icon: "profile" },
+  { href: "/stats", label: "Stats", icon: "stats" },
+  { href: "/profile", label: "You", icon: "you" },
 ];
 
 /** A destination is active on its own route and any nested route. */

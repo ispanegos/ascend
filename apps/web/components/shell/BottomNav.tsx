@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PixelIcon } from "@/components/ui/PixelIcon";
 import { cx } from "@/lib/cx";
-import { Icon } from "@/components/ui/Icon";
 import { NAV_ITEMS, isActiveHref } from "./nav-items";
 import styles from "./BottomNav.module.css";
 
 /**
- * Bottom navigation (spec §25, §26, §34). The active destination is marked by
- * `aria-current`, an indicator bar, a filled icon well and heavier label —
- * never colour alone.
+ * Bottom navigation (V2 §4). Active: gold icon, gold label, a lit bar above —
+ * never colour alone. ASCEND sits in the centre on a raised gate plate,
+ * larger than the rest but not a floating button.
  */
 export function BottomNav() {
   const pathname = usePathname();
@@ -28,7 +28,7 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
               >
                 <span className={styles.well}>
-                  <Icon name={item.icon} size={22} />
+                  <PixelIcon name={item.icon} size={item.primary ? 28 : 24} />
                 </span>
                 <span className={styles.label}>{item.label}</span>
               </Link>
