@@ -34,6 +34,9 @@ class Subdomain:
     name: str
     weight: float
     sources: tuple[Source, ...]
+    # True when sources are alternative tests (the athlete does one of them),
+    # so a missing alternative is not missing evidence.
+    alternatives: bool = False
 
 
 @dataclass(frozen=True)
@@ -69,6 +72,12 @@ class EngineConfig:
     weighted_mean_share: float
     lowest_three_share: float
     mixed_exponent: float
+    initial_calibration_cap: float
+    independent_observation_min_hours: float
+    baseline_sources: tuple[str, ...]
+    qualifying_sources: tuple[str, ...]
+    required_any_subdomain: dict[str, tuple[str, ...]]
+    missing_prior: dict[str, float]
     features: dict = field(default_factory=dict)
 
     def incline_factor(self, height_cm: float) -> float:
@@ -116,6 +125,10 @@ def parse_config(raw: dict) -> EngineConfig:
 
     curves: dict[str, Curve] = {}
     for curve_id, definition in raw.get("curves", {}).items():
+        # Every curve must explain itself for human review (CALIBRATION_AUDIT).
+        for key in ("rationale", "weakness"):
+            if not isinstance(definition.get(key), str) or not definition[key].strip():
+                raise ConfigError(f"curves.{curve_id}.{key} is required")
         try:
             curves[curve_id] = build_curve(curve_id, definition, scale)
         except CurveError as error:
@@ -136,7 +149,12 @@ def parse_config(raw: dict) -> EngineConfig:
                 if curve_id not in curves:
                     raise ConfigError(f"attributes.{attribute}.{name}: unknown curve {curve_id!r}")
                 sources.append(Source(curve=curve_id, weight=_number(source, "weight", f"{attribute}.{name}", 0.0)))
-            parsed.append(Subdomain(name=name, weight=float(definition["weight"]), sources=tuple(sources)))
+            alternatives = definition.get("alternatives", False)
+            if not isinstance(alternatives, bool):
+                raise ConfigError(f"attributes.{attribute}.{name}.alternatives must be true or false")
+            parsed.append(
+                Subdomain(name=name, weight=float(definition["weight"]), sources=tuple(sources), alternatives=alternatives)
+            )
         attributes[attribute] = tuple(parsed)
 
     confidence = raw["confidence"]
@@ -174,6 +192,28 @@ def parse_config(raw: dict) -> EngineConfig:
     except (KeyError, CurveError) as error:
         raise ConfigError(f"features.F01.incline_equivalence invalid: {error}") from error
 
+    verified_threshold = _number(confidence, "verified_threshold", "confidence", 0.0, 1.0)
+    cap = _number(confidence, "initial_calibration_cap", "confidence", 0.0, 1.0)
+    if cap >= verified_threshold:
+        raise ConfigError("confidence.initial_calibration_cap must be below verified_threshold: Spawn alone must not verify")
+
+    verification = raw.get("verification", {})
+    baseline = tuple(verification.get("baseline_sources", []))
+    qualifying = tuple(verification.get("qualifying_sources", []))
+    if not baseline or not qualifying or set(baseline) & set(qualifying):
+        raise ConfigError("verification needs disjoint, non-empty baseline_sources and qualifying_sources")
+    required_any: dict[str, tuple[str, ...]] = {}
+    for attribute, names in verification.get("required_any_subdomain", {}).items():
+        known = {sd.name for sd in attributes.get(attribute, ())}
+        if attribute not in ATTRIBUTES or not names or not set(names) <= known:
+            raise ConfigError(f"verification.required_any_subdomain.{attribute} names unknown subdomains")
+        required_any[attribute] = tuple(names)
+
+    priors = raw.get("estimation", {}).get("missing_prior", {})
+    if set(priors) != set(ATTRIBUTES):
+        raise ConfigError("estimation.missing_prior must define every attribute")
+    missing_prior = {a: _number(priors, a, "estimation.missing_prior", scale[0] + 1e-9, scale[1]) for a in ATTRIBUTES}
+
     return EngineConfig(
         engine_version=version,
         calibration_status=status,
@@ -183,7 +223,7 @@ def parse_config(raw: dict) -> EngineConfig:
         curves=curves,
         attributes=attributes,
         confidence_weights=_weights(confidence["weights"], "confidence.weights", ("coverage", "recency", "repeatability", "quality")),
-        verified_threshold=_number(confidence, "verified_threshold", "confidence", 0.0, 1.0),
+        verified_threshold=verified_threshold,
         default_repeatability=_number(confidence, "default_repeatability", "confidence", 0.0, 1.0),
         repeatability_cv_tolerance=_number(confidence, "repeatability_cv_tolerance", "confidence", 1e-9),
         recency_floor=_number(raw["recency"], "floor", "recency", 0.0, 1.0),
@@ -199,6 +239,12 @@ def parse_config(raw: dict) -> EngineConfig:
         weighted_mean_share=float(overall["weighted_mean_share"]),
         lowest_three_share=float(overall["lowest_three_share"]),
         mixed_exponent=_number(raw["normalization"], "mixed_exponent", "normalization", 0.0, 1.0),
+        initial_calibration_cap=cap,
+        independent_observation_min_hours=_number(confidence, "independent_observation_min_hours", "confidence", 0.0),
+        baseline_sources=baseline,
+        qualifying_sources=qualifying,
+        required_any_subdomain=required_any,
+        missing_prior=missing_prior,
         features=raw.get("features", {}),
     )
 
@@ -207,7 +253,7 @@ def config_path(version: str) -> Path:
     return CONFIG_DIR / f"v{version.replace('.', '_')}.toml"
 
 
-def load_config(version: str = "0.1.0") -> EngineConfig:
+def load_config(version: str = "0.1.1") -> EngineConfig:
     path = config_path(version)
     if not path.exists():
         raise ConfigError(f"no configuration for engine version {version}")

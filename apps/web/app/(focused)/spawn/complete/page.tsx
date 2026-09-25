@@ -56,8 +56,8 @@ export default async function SpawnCompletePage() {
               <p className="text-label text-muted">Athlete profile</p>
               <h1 className="text-display">Initialized.</h1>
               <p className={styles.lede}>
-                Your first estimate of what you can actually do. Confidence is still building — ASCEND will refine
-                these as you train.
+                Your first estimate of what you can actually do. Every Stat is provisional: Spawn sets your starting
+                point, and a Stat is verified only by an independent result on a later day.
               </p>
             </header>
             <StatList stats={stats} />

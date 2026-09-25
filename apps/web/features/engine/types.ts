@@ -17,7 +17,7 @@ export interface EngineInput {
     raw_payload: unknown;
   }>;
   gaps: Array<{ test_key: string; status: string; reason_code: string | null }>;
-  previous?: { attributes: Record<string, { peak: number | null }> };
+  previous?: { attributes: Record<string, { provisional_peak: number | null; verified_peak: number | null }> };
 }
 
 export type StatStatusWire = "unranked" | "provisional" | "verified";
@@ -25,12 +25,15 @@ export type StatStatusWire = "unranked" | "provisional" | "verified";
 export interface EngineStat {
   attribute: string;
   current: number | null;
-  peak: number | null;
+  provisional_peak: number | null;
+  verified_peak: number | null;
+  verified_peak_updated: boolean;
   score: number | null;
   confidence: number;
+  uncapped_confidence: number;
   coverage: number;
   status: StatStatusWire;
-  peak_updated: boolean;
+  verification_eligible: boolean;
   evidence_ids: string[];
   trace: Record<string, unknown>;
 }

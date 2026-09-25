@@ -13,12 +13,12 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import datetime
 
-from .aggregation.attributes import AttributeResult, SourceScore, aggregate_attribute
+from .aggregation.attributes import AttributeResult, Observation, SourceScore, aggregate_attribute
 from .aggregation.overall import calculate_overall
 from .assessment.features import TestFeatures, derive_cross_test, extract
 from .config import ATTRIBUTES, EngineConfig, canonical_hash, load_config
 from .evidence.parsing import EvidenceError, parse_athlete, parse_evidence, parse_gap, parse_time
-from .progression.current_peak import resolve_peak
+from .progression.current_peak import resolve_peaks
 from .version import ASCEND_ENGINE_VERSION
 
 INPUT_SCHEMA_VERSION = 1
@@ -43,8 +43,11 @@ def _iso(at: datetime) -> str:
 def _source_trace(source: SourceScore) -> dict:
     data = asdict(source)
     data["occurred_at"] = _iso(source.occurred_at)
-    data["observations"] = len(source.history)
-    del data["history"]
+    data["observations"] = [
+        {"occurred_at": _iso(at), "source_type": source_type, "evidence_id": evidence_id}
+        for at, source_type, evidence_id in source.observations
+    ]
+    data["independent_observations"] = len(source.independent_scores)
     return data
 
 
@@ -89,6 +92,8 @@ def _attribute_trace(
                 "quality": sd.quality,
                 "recency": sd.recency,
                 "repeatability": sd.repeatability,
+                "independent_observations": sd.independent_observations,
+                "source_coverage": sd.source_coverage,
                 "sources": [_source_trace(s) for s in sd.sources],
                 "missing": sd.missing_sources,
             }
@@ -97,20 +102,46 @@ def _attribute_trace(
         "missing_subdomains": [sd.name for sd in result.subdomains if not sd.observed],
         "gaps": [g for g in gaps if g["test_key"] in tests],
         "weights": {"configured": {sd.name: sd.weight for sd in result.subdomains}, "renormalized": result.renormalized_weights},
+        "estimate": None
+        if result.estimate is None
+        else {
+            "observed": result.estimate.observed,
+            "coverage": result.estimate.coverage,
+            "missing_prior": result.estimate.prior,
+            "blended": result.estimate.blended,
+            "value": result.estimate.value,
+            "missing_domain_adjustment": result.estimate.value - result.estimate.observed,
+        },
         "confidence": {
             **result.confidence.as_dict(),
+            "uncapped_value": result.uncapped_confidence,
+            "initial_calibration_cap": cfg.initial_calibration_cap,
+            "cap_applied": result.cap_applied,
             "weights": cfg.confidence_weights,
             "verified_threshold": cfg.verified_threshold,
         },
+        "longitudinal": None
+        if result.verification is None
+        else {
+            "verification_eligible": result.verification.eligible,
+            "reason": result.verification.reason,
+            "baseline_until": _iso(result.verification.anchor) if result.verification.anchor else None,
+            "qualifying_evidence_ids": list(result.verification.qualifying_evidence_ids),
+            "required_any_subdomain": list(result.verification.required_subdomains),
+            "independent_observation_min_hours": cfg.independent_observation_min_hours,
+            "max_independent_observations": max(
+                (sd.independent_observations for sd in result.subdomains if sd.observed), default=0
+            ),
+        },
         "formula": {
-            "score": "Σ renormalized_weight × subdomain_score over observed subdomains",
-            "confidence": "0.45·coverage + 0.25·recency + 0.15·repeatability + 0.15·quality (weights from config)",
+            "score": "min(observed, observed × coverage + missing_prior × (1 − coverage)); observed = Σ renormalized_weight × subdomain_score",
+            "confidence": "0.45·coverage + 0.25·recency + 0.15·repeatability + 0.15·quality, capped at initial_calibration_cap until verification-eligible",
         },
         "result": {
             "score": result.score,
             "current": peak_info["current"],
-            "peak": peak_info["peak"],
-            "peak_updated": peak_info["peak_updated"],
+            "provisional_peak": peak_info["provisional_peak"],
+            "verified_peak": peak_info["verified_peak"],
             "confidence": result.confidence.value,
             "status": result.status,
         },
@@ -125,7 +156,7 @@ def calculate(payload: dict, config: EngineConfig | None = None) -> dict:
       "athlete": {"id", "body_mass_kg", "height_cm", "age_years", "sex"},
       "evidence": [{"id", "test_key", "source_type", "occurred_at", "raw_payload"}],
       "gaps": [{"test_key", "status", "reason_code"}],        # optional
-      "previous": {"attributes": {attr: {"peak": float|null}}}, # optional
+      "previous": {"attributes": {attr: {"provisional_peak", "verified_peak"}}}, # optional
       "as_of": ISO timestamp                                    # optional
     }
     """
@@ -156,9 +187,11 @@ def calculate(payload: dict, config: EngineConfig | None = None) -> dict:
         latest_by_test[features.test_key] = features
     derive_cross_test(latest_by_test)
 
-    observations_by_test: dict[str, list] = {}
+    observations_by_test: dict[str, list[Observation]] = {}
     for features, ev in extracted:
-        observations_by_test.setdefault(ev.test_key, []).append((features, ev.source, ev.occurred_at))
+        observations_by_test.setdefault(ev.test_key, []).append(
+            Observation(features=features, entry_source=ev.source, occurred_at=ev.occurred_at, source_type=ev.source_type)
+        )
 
     previous = (payload.get("previous") or {}).get("attributes") or {}
     gap_dicts = [asdict(g) for g in gaps]
@@ -166,23 +199,36 @@ def calculate(payload: dict, config: EngineConfig | None = None) -> dict:
     attributes: dict[str, dict] = {}
     for attribute in ATTRIBUTES:
         result = aggregate_attribute(attribute, observations_by_test, athlete.body_mass_kg, as_of, cfg)
-        previous_peak = previous.get(attribute, {}).get("peak")
-        peak = resolve_peak(
+        prior = previous.get(attribute, {})
+
+        def prior_value(key: str) -> float | None:
+            value = prior.get(key)
+            return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+        peaks = resolve_peaks(
             result.score,
             result.confidence.value,
-            float(previous_peak) if isinstance(previous_peak, (int, float)) else None,
+            prior_value("provisional_peak"),
+            prior_value("verified_peak"),
             cfg.verified_threshold,
         )
-        peak_info = {"current": peak.current, "peak": peak.peak, "peak_updated": peak.peak_updated}
+        peak_info = {
+            "current": peaks.current,
+            "provisional_peak": peaks.provisional_peak,
+            "verified_peak": peaks.verified_peak,
+        }
         attributes[attribute] = {
             "attribute": attribute,
             "score": result.score,
-            "current": peak.current,
-            "peak": peak.peak,
-            "peak_updated": peak.peak_updated,
+            "current": peaks.current,
+            "provisional_peak": peaks.provisional_peak,
+            "verified_peak": peaks.verified_peak,
+            "verified_peak_updated": peaks.verified_updated,
             "confidence": result.confidence.value,
+            "uncapped_confidence": result.uncapped_confidence,
             "coverage": result.confidence.coverage,
             "status": result.status,
+            "verification_eligible": bool(result.verification and result.verification.eligible),
             "evidence_ids": result.evidence_ids,
             "trace": _attribute_trace(result, latest_by_test, gap_dicts, peak_info, as_of, cfg),
         }

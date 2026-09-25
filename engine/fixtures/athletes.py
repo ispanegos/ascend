@@ -200,6 +200,61 @@ def athlete_f() -> Spawn:
     return s
 
 
+# ---------------------------------------------------------------------------
+# Milestone 3.1 fixtures: missing-evidence and verification semantics
+# ---------------------------------------------------------------------------
+
+
+def _strength_subdomain_tests() -> dict[str, tuple[float, str]]:
+    """B's measured Strength subdomains: name → (score, test that measured it)."""
+    from ascend_engine import calculate
+
+    trace = calculate(athlete_b().payload())["attributes"]["strength"]["trace"]["subdomain_scores"]
+    return {name: (sd["score"], sd["sources"][0]["test_key"]) for name, sd in trace.items() if sd["observed"]}
+
+
+def _without_test(athlete_id: str, test_key: str) -> Spawn:
+    s = athlete_b(athlete_id)
+    s.evidence = [e for e in s.evidence if e["test_key"] != test_key]
+    s.gap(test_key, "skipped", "missing_equipment")
+    return s
+
+
+def athlete_h() -> Spawn:
+    """H — B without the test behind their BEST Strength subdomain."""
+    subdomains = _strength_subdomain_tests()
+    best = max(subdomains, key=lambda name: subdomains[name][0])
+    return _without_test("H-no-best-strength", subdomains[best][1])
+
+
+def athlete_i() -> Spawn:
+    """I — B without the test behind their WORST Strength subdomain."""
+    subdomains = _strength_subdomain_tests()
+    worst = min(subdomains, key=lambda name: subdomains[name][0])
+    return _without_test("I-no-worst-strength", subdomains[worst][1])
+
+
+def athlete_j() -> Spawn:
+    """J — B with every Spawn test and nothing after Spawn."""
+    return athlete_b("J-spawn-only")
+
+
+def athlete_k() -> Spawn:
+    """K — J plus one qualifying later verification: a goblet-squat reassessment two weeks later."""
+    s = athlete_b("K-verified-later")
+    s.test("F02", sets([(16, 10, 6, "clean"), (20, 10, 7, "clean"), (24, 10, 8, "clean")]),
+           data={"stop_reason": "muscular_fatigue"}, days_after=14, source_type="reassessment")
+    return s
+
+
+def athlete_l() -> Spawn:
+    """L — J plus the same goblet squat repeated three hours later (same day)."""
+    s = athlete_b("L-same-day-repeat")
+    s.test("F02", sets([(16, 10, 6, "clean"), (20, 10, 7, "clean"), (24, 10, 8, "clean")]),
+           data={"stop_reason": "muscular_fatigue"}, hours_after=3, source_type="reassessment")
+    return s
+
+
 FIXTURES: dict[str, Callable[[], Spawn]] = {
     "A": athlete_a,
     "B": athlete_b,
@@ -207,4 +262,9 @@ FIXTURES: dict[str, Callable[[], Spawn]] = {
     "D": athlete_d,
     "E": athlete_e,
     "F": athlete_f,
+    "H": athlete_h,
+    "I": athlete_i,
+    "J": athlete_j,
+    "K": athlete_k,
+    "L": athlete_l,
 }

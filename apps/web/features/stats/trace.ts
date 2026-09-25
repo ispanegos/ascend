@@ -85,3 +85,34 @@ export function displayStat(value: number | null): string {
 export function displayPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
+
+export interface LongitudinalView {
+  eligible: boolean;
+  reason: string;
+  capApplied: boolean;
+}
+
+/** Whether the Stat has independent post-Spawn evidence (Milestone 3.1). */
+export function readLongitudinal(trace: unknown): LongitudinalView | null {
+  if (!isRecord(trace) || !isRecord(trace.longitudinal) || !isRecord(trace.confidence)) return null;
+  return {
+    eligible: trace.longitudinal.verification_eligible === true,
+    reason: typeof trace.longitudinal.reason === "string" ? trace.longitudinal.reason : "",
+    capApplied: trace.confidence.cap_applied === true,
+  };
+}
+
+export interface EstimateView {
+  /** Score from measured subdomains alone. */
+  observed: number;
+  /** ≤ 0: how far missing-but-measurable evidence pulled the score toward the prior. */
+  adjustment: number;
+}
+
+/** The missing-evidence estimate (Milestone 3.1 §4); never raises a Stat. */
+export function readEstimate(trace: unknown): EstimateView | null {
+  if (!isRecord(trace) || !isRecord(trace.estimate)) return null;
+  const observed = num(trace.estimate.observed);
+  const adjustment = num(trace.estimate.missing_domain_adjustment);
+  return observed === null || adjustment === null ? null : { observed, adjustment: Math.min(0, adjustment) };
+}

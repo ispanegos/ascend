@@ -9,19 +9,19 @@ from ascend_engine.config import ATTRIBUTES, ConfigError, config_path, load_conf
 
 @pytest.fixture()
 def raw():
-    with config_path("0.1.0").open("rb") as handle:
+    with config_path("0.1.1").open("rb") as handle:
         return tomllib.load(handle)
 
 
 def test_version_and_status(cfg):
-    assert ASCEND_ENGINE_VERSION == "0.1.0"
-    assert cfg.engine_version == "0.1.0"
+    assert ASCEND_ENGINE_VERSION == "0.1.1"
+    assert cfg.engine_version == "0.1.1"
     assert cfg.calibration_status == "provisional"
     assert "not population norms" in cfg.raw["calibration_note"].lower()
 
 
 def test_hash_is_stable(cfg):
-    assert load_config("0.1.0").config_hash == cfg.config_hash
+    assert load_config("0.1.1").config_hash == cfg.config_hash
     assert len(cfg.config_hash) == 64
 
 
@@ -36,6 +36,11 @@ def test_spec_values(cfg):
     }
     assert set(cfg.overall_required) == {"endurance", "strength", "core", "mobility", "agility"}
     assert cfg.evidence_weights["boss"] == 1.0 and cfg.evidence_weights["spawn_test"] == 0.9
+    assert cfg.initial_calibration_cap == 0.69 < cfg.verified_threshold
+    assert cfg.independent_observation_min_hours == 24
+    assert "spawn_test" in cfg.baseline_sources and "spawn_test" not in cfg.qualifying_sources
+    assert cfg.required_any_subdomain["recovery"] == ("workload_response", "sleep_recovery")
+    assert all(0 < prior < 100 for prior in cfg.missing_prior.values())
 
 
 def test_brief_subdomains(cfg):
@@ -106,3 +111,36 @@ def test_rejects_bad_status(raw):
 def test_unknown_version():
     with pytest.raises(ConfigError):
         load_config("9.9.9")
+
+
+def test_cap_must_stay_below_verification(raw):
+    broken = copy.deepcopy(raw)
+    broken["confidence"]["initial_calibration_cap"] = 0.70
+    with pytest.raises(ConfigError, match="Spawn alone must not verify"):
+        parse_config(broken)
+
+
+def test_every_curve_documents_rationale_and_weakness(raw):
+    broken = copy.deepcopy(raw)
+    del broken["curves"]["M05_sit_reach_cm"]["weakness"]
+    with pytest.raises(ConfigError, match="weakness"):
+        parse_config(broken)
+
+
+def test_missing_prior_is_never_zero(raw):
+    broken = copy.deepcopy(raw)
+    broken["estimation"]["missing_prior"]["strength"] = 0.0
+    with pytest.raises(ConfigError):
+        parse_config(broken)
+
+
+def test_spawn_cannot_be_a_qualifying_source(raw):
+    broken = copy.deepcopy(raw)
+    broken["verification"]["qualifying_sources"].append("spawn_test")
+    with pytest.raises(ConfigError):
+        parse_config(broken)
+
+
+def test_normalization_is_documented_as_provisional(raw):
+    text = config_path("0.1.1").read_text()
+    assert "PROVISIONAL" in text and "not validated standards" in text

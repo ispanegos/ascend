@@ -17,7 +17,7 @@ def fmt(value: float | None) -> str:
 
 
 def main() -> None:
-    header = f"{'athlete':28} {'OVR':>5} " + " ".join(f"{a[:4].upper():>10}" for a in ATTRIBUTES)
+    header = f"{'athlete':28} {'OVR':>5} " + " ".join(f"{a[:4].upper():>11}" for a in ATTRIBUTES)
     print(header)
     print("-" * len(header))
     for key, build in FIXTURES.items():
@@ -25,20 +25,22 @@ def main() -> None:
         cells = []
         for attribute in ATTRIBUTES:
             stat = out["attributes"][attribute]
-            cells.append(f"{fmt(stat['current'])} {stat['confidence'] * 100:3.0f}%")
+            mark = "V" if stat["status"] == "verified" else " "
+            cells.append(f"{fmt(stat['current'])} {stat['confidence'] * 100:3.0f}%{mark}")
         overall = out["overall"]
-        print(f"{key + ' ' + build().athlete_id:28} {fmt(overall['current'])} " + " ".join(f"{c:>10}" for c in cells))
-    print("\nEach cell: Current, Confidence. — = UNRANKED (unknown, not zero).")
+        print(f"{key + ' ' + build().athlete_id:28} {fmt(overall['current'])} " + " ".join(f"{c:>11}" for c in cells))
+    print("\nEach cell: Current, Confidence (V = VERIFIED). — = UNRANKED (unknown, not zero).")
+    print("H/I: B minus best/worst Strength subdomain. J: B, Spawn only. K: + reassessment 14 days later. L: + same-day repeat.")
 
     print("\nG — unexpectedly strong evidence against B's Endurance (observed 70):")
     cfg = load_config()
     base = calculate(athlete_b().payload())["attributes"]["endurance"]
-    for source in ("workout", "wearable", "spawn_test", "boss"):
+    for source in ("workout", "verified_workout", "spawn_test", "boss"):
         result = update_current(
             base["current"], 70.0, source_type=source, quality=0.9, current_confidence=base["confidence"], cfg=cfg
         )
         print(
-            f"  {source:11} {result.previous:5.1f} → {result.new_current:5.1f}"
+            f"  {source:16} {result.previous:5.1f} → {result.new_current:5.1f}"
             f"  (uncapped {result.uncapped_delta:+5.2f}, cap ±{result.cap:.0f}{', capped' if result.capped else ''})"
         )
 

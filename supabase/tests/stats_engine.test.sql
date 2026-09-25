@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(24);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -50,9 +50,9 @@ returns jsonb language sql as $$
     'gaps', '[]'::jsonb,
     'evidence_ids', jsonb_build_array(evidence),
     'attributes', jsonb_build_object(
-      'mobility', jsonb_build_object('current', 48.1234, 'peak', 48.1234, 'confidence', 0.8, 'coverage', 0.25,
-        'status', 'verified', 'peak_updated', true, 'evidence_ids', jsonb_build_array(evidence), 'trace', '{"attribute":"mobility"}'::jsonb),
-      'power', jsonb_build_object('current', null, 'peak', null, 'confidence', 0, 'coverage', 0,
+      'mobility', jsonb_build_object('current', 48.1234, 'verified_peak', null, 'provisional_peak', 48.1234,
+        'confidence', 0.62, 'coverage', 0.25, 'status', 'provisional', 'verified_peak_updated', false, 'evidence_ids', jsonb_build_array(evidence), 'trace', '{"attribute":"mobility"}'::jsonb),
+      'power', jsonb_build_object('current', null, 'verified_peak', null, 'provisional_peak', null, 'confidence', 0, 'coverage', 0,
         'status', 'unranked', 'evidence_ids', '[]'::jsonb, 'trace', '{"attribute":"power"}'::jsonb)
     ),
     'overall', jsonb_build_object('current', null, 'confidence', 0, 'status', 'unranked', 'participating', '[]'::jsonb, 'trace', '{}'::jsonb)
@@ -101,6 +101,11 @@ select is((select count(*)::int from public.stat_calculations where athlete_id =
 select is((select count(*)::int from public.stat_snapshots where athlete_id = 'c1111111-1111-1111-1111-111111111111'), 2, 'a snapshot per attribute');
 select is((select current from public.stat_snapshots where attribute = 'mobility' and athlete_id = 'c1111111-1111-1111-1111-111111111111'),
   48.1234::numeric, 'Current keeps its decimals');
+select is(
+  (select provisional_peak::text || '/' || coalesce(verified_peak::text, 'null') from public.stat_snapshots
+   where attribute = 'mobility' and athlete_id = 'c1111111-1111-1111-1111-111111111111'),
+  '48.1234/null', 'after Spawn only a provisional Peak exists'
+);
 select is((select status from public.stat_snapshots where attribute = 'power' and athlete_id = 'c1111111-1111-1111-1111-111111111111'),
   'unranked', 'unknown Power is stored as unranked, not zero');
 select is(
@@ -149,6 +154,12 @@ select is((select count(*)::int from public.stat_snapshots), 0, 'an athlete cann
 set local request.jwt.claims = '{"sub": "c1111111-1111-1111-1111-111111111111", "role": "authenticated"}';
 select is((select count(*)::int from public.stat_snapshots), 2, 'an athlete reads their own Stats');
 reset role;
+
+select ok(
+  (select pg_get_constraintdef(oid) from pg_constraint where conname = 'performance_evidence_source_type_check')
+    like '%''verified_workout''%',
+  'verified_workout is its own evidence event type (ADR-036)'
+);
 
 select * from finish();
 rollback;

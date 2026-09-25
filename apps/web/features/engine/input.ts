@@ -34,7 +34,7 @@ export async function buildEngineInput(supabase: Supabase, athleteId: string): P
       .order("occurred_at"),
     supabase
       .from("stat_snapshots")
-      .select("attribute, peak, calculated_at")
+      .select("attribute, verified_peak, provisional_peak, calculated_at")
       .eq("athlete_id", athleteId)
       .order("calculated_at", { ascending: false }),
   ]);
@@ -63,9 +63,12 @@ export async function buildEngineInput(supabase: Supabase, athleteId: string): P
     }));
 
   // Previous Peaks never decrease across recalculations (spec §7).
-  const previous: Record<string, { peak: number | null }> = {};
+  const toPeak = (value: number | null) => (value === null ? null : Number(value));
+  const previous: Record<string, { provisional_peak: number | null; verified_peak: number | null }> = {};
   for (const row of snapshots.data) {
-    if (!(row.attribute in previous)) previous[row.attribute] = { peak: row.peak === null ? null : Number(row.peak) };
+    if (!(row.attribute in previous)) {
+      previous[row.attribute] = { provisional_peak: toPeak(row.provisional_peak), verified_peak: toPeak(row.verified_peak) };
+    }
   }
 
   const newestEvidence = evidence.data.at(-1)?.occurred_at ?? null;

@@ -12,4 +12,4 @@ from ascend_engine.config import load_config  # noqa: E402
 
 @pytest.fixture(scope="session")
 def cfg():
-    return load_config("0.1.0")
+    return load_config("0.1.1")

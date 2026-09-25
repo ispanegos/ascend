@@ -16,7 +16,7 @@ def test_calculate_round_trip():
     result = run(["calculate"], json.dumps(athlete_b().payload()))
     assert result.returncode == 0, result.stderr
     out = json.loads(result.stdout)
-    assert out["engine_version"] == "0.1.0"
+    assert out["engine_version"] == "0.1.1"
     assert out["attributes"]["strength"]["current"] is not None
 
 
@@ -28,10 +28,18 @@ def test_invalid_input_exit_code():
 
 def test_validate_config():
     result = run(["validate-config"])
-    assert result.returncode == 0 and result.stdout.startswith("ok 0.1.0")
+    assert result.returncode == 0 and result.stdout.startswith("ok 0.1.1")
 
 
 def test_config_dump_is_provisional():
     out = json.loads(run(["config"]).stdout)
     assert out["calibration_status"] == "provisional"
     assert out["config"]["curves"]
+
+
+def test_calibration_audit_is_current():
+    """docs/CALIBRATION_AUDIT_v0.1.md must match the configuration."""
+    generated = run(["audit"]).stdout
+    checked_in = (ENGINE.parent / "docs" / "CALIBRATION_AUDIT_v0.1.md").read_text()
+    assert generated == checked_in, "run: python -m ascend_engine audit > ../docs/CALIBRATION_AUDIT_v0.1.md"
+    assert generated.count("### ") == 22

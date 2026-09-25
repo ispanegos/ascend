@@ -161,6 +161,33 @@ status, engine version and a calculation trace. Not deployed (ADR-023 §10).
 - [x] Initialization idempotent; snapshots append-only; clients cannot write Stats
 - [x] All M1/M2 regression suites pass
 
+## Milestone 3.1 — Stats engine review and correction · `DONE (local)`
+
+Corrects scoring semantics before Quest/Path logic (ADR-031 to ADR-036).
+Engine `0.1.1`. Not deployed.
+
+| Area | Implementation | Refs |
+|---|---|---|
+| Spawn never verifies | Confidence scaled into `initial_calibration_cap = 0.69` until a qualifying post-Spawn event | ADR-031 |
+| Temporal repeatability | Observations < 24 h apart are one; qualifying event types `reassessment`, `boss`, `verified_workout`; Recovery also needs workload/sleep | ADR-033, ADR-036 |
+| Event type vs entry source | `verified_workout` event type (migration `20260929100000_verified_workout_evidence.sql`); wearable entry ≠ verification | ADR-036 |
+| Missing evidence | Conservative estimate toward a non-zero prior (20, provisional for v0.1); never raises a Stat; property tests | ADR-034, ADR-036 |
+| Peak | `provisional_peak` + `verified_peak`; migration `20260929090000_peak_semantics.sql` | ADR-032 |
+| Calibration audit | `python -m ascend_engine audit` → `docs/CALIBRATION_AUDIT_v0.1.md`; staleness test | ADR-035 |
+| Service role | Post-build client-bundle scan + unit guard | ADR-035 |
+| UI | Initialized screen: provisional, real capped Confidence; Stat detail: Peak "Not verified yet", why-this-score incl. missing-evidence note, evidence source | brief §13, §14 |
+| Fixtures | Synthetic athletes A–L (`npm run engine:report`) | brief §10 |
+
+### Acceptance
+
+- [x] Spawn alone never produces VERIFIED; Confidence ≤ 0.69 without later evidence
+- [x] Same-day repeats stay PROVISIONAL; one qualifying later event can verify
+- [x] Removing evidence never raises Current (H, I, property tests); unknown ≠ zero
+- [x] Peak split, never decreases; UI shows "Not verified yet"
+- [x] Recovery PROVISIONAL without workload/sleep; Power UNRANKED
+- [x] Update caps, decay and determinism unchanged and tested
+- [x] Full regression: pytest, Vitest, pgTAP, Playwright, typecheck, lint, build
+
 ## Milestone 4 — Athlete dashboard · `NOT STARTED`
 
 Today (§61), Stats + Stat cards (§35), Stat detail (§63), Paths (§18),

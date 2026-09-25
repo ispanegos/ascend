@@ -311,9 +311,13 @@ test.describe("Spawn journey", () => {
     const statList = page.getByRole("region", { name: "Athlete Stats" });
     await expect(statList.getByRole("link", { name: /^Power\s*—\s*Unranked/ })).toBeVisible();
     for (const name of ["Endurance", "Strength", "Core", "Mobility", "Agility"]) {
-      // Rounded integer + status + confidence, never a decimal.
-      await expect(statList.getByRole("link", { name: new RegExp(`^${name}\\s*\\d{1,3}\\s*(Verified|Provisional) · \\d{1,3}%`) })).toBeVisible();
+      // Rounded integer + real (capped) Confidence; never a decimal, never verified by Spawn alone.
+      const row = statList.getByRole("link", { name: new RegExp(`^${name}\\s*\\d{1,3}\\s*Confidence \\d{1,2}%$`) });
+      await expect(row).toBeVisible();
+      const percent = Number((await row.textContent())?.match(/Confidence (\d+)%/)?.[1]);
+      expect(percent).toBeLessThanOrEqual(69);
     }
+    await expect(statList.getByText("Provisional", { exact: true })).toBeVisible(); // Overall
     await expect(statList).not.toContainText(/\d\.\d/); // integers only; decimals stay internal
     await expectNoHorizontalOverflow(page);
     await expectTouchTargets(page);
@@ -324,6 +328,8 @@ test.describe("Spawn journey", () => {
     await statList.getByRole("link", { name: /^Endurance/ }).click();
     await expect(page).toHaveURL(/\/stats\/endurance$/);
     await expect(page.getByRole("heading", { level: 1, name: "Endurance" })).toBeVisible();
+    await expect(page.getByText("Not verified yet", { exact: true })).toBeVisible();
+    await expect(page.getByText(/can become verified after an independent result on a later day/)).toBeVisible();
     await expect(page.getByText("Pace distance")).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: "Spawn · E04" })).toContainText("20-Minute Run/Walk");
     await expectNoHorizontalOverflow(page);

@@ -1,28 +1,39 @@
 import pytest
 
-from ascend_engine.progression.current_peak import resolve_peak
+from ascend_engine.progression.current_peak import resolve_peaks
 from ascend_engine.progression.decay import decayed_current
 from ascend_engine.progression.update import UpdateError, update_current
 
 
-class TestPeak:
-    def test_peak_needs_verification(self):
-        assert resolve_peak(40.0, 0.65, None, 0.70).peak is None
-        assert resolve_peak(40.0, 0.70, None, 0.70).peak == 40.0
+class TestPeaks:
+    def test_verified_peak_needs_verification(self):
+        peaks = resolve_peaks(40.0, 0.69, None, None, 0.70)
+        assert peaks.verified_peak is None
+        assert peaks.provisional_peak == 40.0
+        assert resolve_peaks(40.0, 0.70, None, None, 0.70).verified_peak == 40.0
 
-    def test_peak_only_rises(self):
-        assert resolve_peak(35.0, 0.95, 40.0, 0.70).peak == 40.0
-        result = resolve_peak(45.0, 0.95, 40.0, 0.70)
-        assert result.peak == 45.0 and result.peak_updated
+    def test_peaks_only_rise(self):
+        peaks = resolve_peaks(35.0, 0.95, 42.0, 40.0, 0.70)
+        assert peaks.verified_peak == 40.0 and peaks.provisional_peak == 42.0
+        higher = resolve_peaks(45.0, 0.95, 42.0, 40.0, 0.70)
+        assert higher.verified_peak == 45.0 and higher.verified_updated and higher.provisional_peak == 45.0
 
-    def test_invalid_evidence_never_sets_peak(self):
-        assert resolve_peak(90.0, 0.99, 40.0, 0.70, evidence_valid=False).peak == 40.0
+    def test_provisional_peak_rises_without_verification(self):
+        peaks = resolve_peaks(50.0, 0.5, 42.0, 40.0, 0.70)
+        assert peaks.provisional_peak == 50.0 and peaks.verified_peak == 40.0
 
-    def test_unknown_current_keeps_peak(self):
-        assert resolve_peak(None, 0.0, 40.0, 0.70).peak == 40.0
+    def test_provisional_peak_includes_verified_peak(self):
+        assert resolve_peaks(30.0, 0.5, None, 44.0, 0.70).provisional_peak == 44.0
+
+    def test_invalid_evidence_never_sets_peaks(self):
+        peaks = resolve_peaks(90.0, 0.99, 42.0, 40.0, 0.70, evidence_valid=False)
+        assert (peaks.provisional_peak, peaks.verified_peak) == (42.0, 40.0)
+
+    def test_unknown_current_keeps_peaks(self):
+        assert resolve_peaks(None, 0.0, 42.0, 40.0, 0.70).verified_peak == 40.0
 
     def test_current_keeps_decimals(self):
-        assert resolve_peak(41.2345, 0.9, None, 0.7).current == 41.2345
+        assert resolve_peaks(41.2345, 0.9, None, None, 0.7).current == 41.2345
 
 
 def upd(cfg, source, current=40.0, observed=70.0, quality=0.9, confidence=0.8):
@@ -31,7 +42,7 @@ def upd(cfg, source, current=40.0, observed=70.0, quality=0.9, confidence=0.8):
 
 class TestUpdate:
     def test_weak_evidence_moves_less_than_strong(self, cfg):
-        assert upd(cfg, "workout").applied_delta < upd(cfg, "wearable").applied_delta < upd(cfg, "spawn_test").applied_delta
+        assert upd(cfg, "workout").applied_delta < upd(cfg, "verified_workout").applied_delta < upd(cfg, "spawn_test").applied_delta
 
     def test_lower_weight_never_moves_more_all_else_equal(self, cfg):
         for observed in (0.0, 20.0, 45.0, 60.0, 100.0):
@@ -41,7 +52,7 @@ class TestUpdate:
 
     def test_caps(self, cfg):
         assert upd(cfg, "workout", observed=100).applied_delta == 1.0
-        assert upd(cfg, "wearable", observed=100).applied_delta == 2.0
+        assert upd(cfg, "verified_workout", observed=100).applied_delta == 2.0
         assert upd(cfg, "spawn_test", observed=100).applied_delta == 5.0
         assert upd(cfg, "boss", observed=100).applied_delta == 8.0
         assert upd(cfg, "boss", observed=0).applied_delta == -8.0

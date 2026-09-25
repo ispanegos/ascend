@@ -547,7 +547,7 @@ ceiling is a lower bound: quality × 0.85 and noted in the trace.
 
 ## ADR-028 — One complete Spawn can reach VERIFIED; Peak starts then
 
-**Status:** Proposed · Milestone 3 · needs product review
+**Status:** Superseded by ADR-031 and ADR-032 (Milestone 3.1)
 
 **Context.** With the §6 formula, full coverage after a fresh Spawn gives
 0.45 + 0.25 + 0.15 × 0.5 + 0.15 × 0.85 ≈ 0.90 ≥ 0.70.
@@ -574,14 +574,172 @@ or height, and a changing age would otherwise change the input.
 
 ---
 
-## ADR-030 — Retry the "JWT issued at future" race
+## ADR-030 — Avoid the "JWT issued at future" race after sign-in
 
-**Status:** Accepted · Milestone 3
+**Status:** Accepted · Milestone 3 · revised in Milestone 3.1
 
-**Context.** Straight after sign-in, a fresh token was intermittently
-rejected by the API as "issued at future" and the first screen failed.
+**Context.** Straight after sign-in or sign-up, the first data request
+occasionally failed with PostgREST `PGRST303 JWT issued at future`. Logging
+in Milestone 3.1 showed the token was validated within the second it was
+issued, and that retrying with the *same* token a second later still failed.
+So the Milestone 3 retry-the-request fix could not work and was removed.
 
-**Decision.** The server Supabase client uses a fetch wrapper that retries
-only that response, at most twice (after 1 s and 2 s).
+**Decision.** Before redirecting, the sign-in and sign-up actions wait
+until the token's issuing second has passed, then confirm the data API
+accepts it with one cheap read. If it is still rejected as issued at future
+(reproducible on the first sign-up after the local stack restarts), the
+action refreshes the session for a new token and tries again, at most four
+times. This runs only in the Server Action, which can write the refreshed
+session cookies; Server Components never refresh tokens (they cannot write
+cookies and would break refresh-token rotation). No request retries.
 
-**Consequences.** A rare, slower first load instead of an error screen.
+**Consequences.** Sign-in is usually about a second slower, a few seconds at
+worst. A token refreshed later by the proxy could in theory meet the same
+race; it has not been observed.
+
+---
+
+## ADR-031 — Spawn alone never verifies: initial calibration cap
+
+**Status:** Accepted · Milestone 3.1 · supersedes ADR-028
+
+**Context.** Product review rejected ADR-028: one Spawn is a single
+assessment period, not proof. Many tests in one period show coverage, not
+that the result holds over time.
+
+**Decision.** Until an attribute has a qualifying post-Spawn verification
+event (ADR-033), its Confidence is capped at `initial_calibration_cap =
+0.69`, below `verified_threshold = 0.70`; config validation rejects a cap at
+or above the threshold. The cap scales rather than clamps: Confidence is
+`uncapped × 0.69 / reference`, where the reference is the best Confidence
+evidence can reach before verification (full coverage and recency, default
+repeatability, best entry quality). Less evidence therefore still shows lower
+Confidence below the cap. The §6 formula and weights are unchanged; the
+trace records `uncapped_value`, the cap and `cap_applied`.
+
+**Consequences.** After Spawn every ranked Stat and Overall is PROVISIONAL
+(a fully covered attribute shows ≈ 68–69 %). The UI shows the calculated
+value, never a hardcoded 69 %.
+
+---
+
+## ADR-032 — Current, provisional Peak and verified Peak
+
+**Status:** Accepted · Milestone 3.1
+
+**Context.** Spec §7 Peak is "best verified capability". A Spawn-only
+maximum is not verified and must not be presented as a lifetime Peak.
+
+**Decision.** `stat_snapshots.peak` becomes `verified_peak` (highest Current
+while VERIFIED) and a new `provisional_peak` stores the highest Current ever
+calculated (migration `20260929090000_peak_semantics.sql`, a rename plus an
+added column; Milestone 3 was never deployed, so no production rows exist).
+Both only rise; the provisional maximum always includes the verified one.
+The UI shows `PEAK · NOT VERIFIED YET` until a verified Peak exists.
+
+**Consequences.** Provisional history is preserved for later analysis
+without claiming verified capability. Decay never touches either Peak.
+
+---
+
+## ADR-033 — Temporal repeatability and qualifying verification events
+
+**Status:** Accepted · Milestone 3.1 · qualifying sources revised by ADR-036
+
+**Decision.**
+- Observations of the same test closer than
+  `independent_observation_min_hours = 24` form one observation window (the
+  newest in the window is scored). Repeatability uses one value per window,
+  so same-day attempts can improve the result or its quality but never
+  repeatability or verification.
+- Verification needs evidence from a `qualifying_sources` event type
+  (`reassessment`, `boss`, `verified_workout`; ADR-036) at least 24 h after
+  the attribute's latest `baseline_sources` (`spawn_test`) evidence.
+  Ordinary `workout` evidence does not qualify yet (ADR-036).
+- Recovery additionally needs `workload_response` or `sleep_recovery`
+  evidence (`required_any_subdomain`); heart-rate recovery alone keeps it
+  PROVISIONAL. No sleep data is ever inferred.
+- Confidence never rises because time passes (recency can only fall).
+
+**Consequences.** One qualifying reassessment on a later day can verify only
+the attributes it measures (fixture K: Strength 91 %, others unchanged).
+
+---
+
+## ADR-034 — Missing evidence cannot improve a Stat
+
+**Status:** Accepted · Milestone 3.1
+
+**Context.** Milestone 3 renormalized over measured subdomains, so athlete E
+(no Pull) scored Strength 44.5 against comparable athlete B's 44.0: losing a
+weak result raised the Stat.
+
+**Decision.** For subdomains a configured test could measure,
+`estimate = min(observed, observed × coverage + prior × (1 − coverage))`
+with a configurable, non-zero `missing_prior` (20 for every attribute in
+v0.1: the start of the internal beginner band). The same rule applies to
+missing complementary sources inside a subdomain (alternative tests the athlete
+chooses between, such as row or pull-up for Pull, are exempt). Subdomains no v0.1 test can measure (Recovery
+sleep/workload, all of Power) lower Confidence only; they do not pull every
+athlete's Current down for data ASCEND cannot yet collect.
+
+**Guarantee (property-tested).** Removing a subdomain scored at or above the
+prior never raises the estimate; removing the best one always lowers it.
+Removing any single Spawn test never raises any attribute for the fixtures.
+Unknown is never zero.
+
+**Consequences.** E's Strength falls from 44.5 to 39.6 and Overall from
+49.5 to 43.0. A removed subdomain scored *below* the prior could raise the
+estimate by at most weight × (prior − score); curves bottom out at 5–15, so
+this is bounded and documented rather than hidden.
+
+---
+
+## ADR-035 — Engine 0.1.1 and the service-role build guard
+
+**Status:** Accepted · Milestone 3.1
+
+**Decision.** The corrected semantics ship as engine `0.1.1` with
+`config/v0_1_1.toml` (0.1.0 was never deployed, so its file was renamed
+rather than kept). Every curve must carry `rationale` and `weakness`;
+`python -m ascend_engine audit` generates `docs/CALIBRATION_AUDIT_v0.1.md`
+from the configuration and a test fails if the committed file is stale.
+The web build runs `scripts/check-client-bundle.mjs` after `next build` and
+fails if the service-role key, its variable name or any `service_role` JWT
+appears in `.next/static`; a unit test keeps the key readable in exactly one
+`server-only` module and never as `NEXT_PUBLIC_*`.
+
+**Consequences.** Recalculating with 0.1.1 produces new snapshots next to
+any 0.1.0 ones (append-only, ADR-029).
+
+---
+
+## ADR-036 — Product decisions after the Milestone 3.1 review
+
+**Status:** Accepted · Milestone 3.1
+
+**1. Ordinary workouts and verification.** Repeated ordinary workouts on
+different days MAY contribute toward verification, but completion alone never
+does: they must provide comparable performance evidence of sufficient quality
+and consistency. The rules are deferred to Milestone 5 (Quest & Workout
+evidence). Until then `workout` is not a qualifying event type.
+
+**2. Event type ≠ entry source.** Two separate dimensions:
+- *Event type* — `performance_evidence.source_type`: `spawn_test`,
+  `reassessment`, `workout`, `verified_workout`, `boss`.
+- *Entry source* — `raw_payload.source`: `manual`, `wearable` (later
+  `imported`, …). It affects measurement quality only.
+
+`verified_workout` is a dedicated event type (migration
+`20260929100000_verified_workout_evidence.sql`) with the ±2.0 cap and
+qualifies for verification. A wearable measurement is not automatically
+verified workout evidence. The Milestone 2 event values `wearable` and
+`manual` stay allowed for existing rows but nothing writes them; the engine
+weighs them like an ordinary workout (weight 0.25, ±1.0 cap, not
+qualifying). Milestone 5 retires them.
+
+**3. Missing-evidence prior.** The neutral prior of 20 (ADR-034) is approved
+for v0.1 only as a provisional calibration parameter. It stays configurable
+(`[estimation.missing_prior]`), is marked provisional in the configuration
+and the calibration audit, and will be reviewed against real athlete data.
+

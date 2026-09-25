@@ -264,3 +264,18 @@
   color: var(--color-danger);
   font-weight: 600;
 }
+
+.peakNote {
+  display: block;
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.calibrating {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-warning);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}

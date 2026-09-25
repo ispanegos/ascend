@@ -10,13 +10,31 @@ import { requireInitializedAthlete } from "@/features/spawn/guard";
 import { getStatDetail } from "@/features/stats/data";
 import { ConfidenceMeter } from "@/features/stats/StatList";
 import styles from "@/features/stats/stats.module.css";
-import { displayPercent, displayStat, readConfidence, readGaps, readSubdomains } from "@/features/stats/trace";
+import {
+  displayPercent,
+  displayStat,
+  readConfidence,
+  readEstimate,
+  readGaps,
+  readLongitudinal,
+  readSubdomains,
+} from "@/features/stats/trace";
 import { cx } from "@/lib/cx";
 
 export async function generateMetadata({ params }: { params: Promise<{ attribute: string }> }): Promise<Metadata> {
   const { attribute } = await params;
   return { title: isAttributeKey(attribute) ? ATTRIBUTE_LABELS[attribute] : "Stat" };
 }
+
+const SOURCE_LABEL: Record<string, string> = {
+  spawn_test: "Spawn",
+  reassessment: "Reassessment",
+  workout: "Workout",
+  verified_workout: "Verified workout",
+  wearable: "Wearable",
+  boss: "Boss",
+  manual: "Manual",
+};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -46,6 +64,11 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
   const subdomains = readSubdomains(stat.trace);
   const confidence = readConfidence(stat.trace);
   const gaps = readGaps(stat.trace);
+  const longitudinal = readLongitudinal(stat.trace);
+  const estimate = readEstimate(stat.trace);
+  // Only worth a sentence when the cautious estimate changes the displayed integer.
+  const adjusted =
+    estimate !== null && stat.current !== null && displayStat(estimate.observed) !== displayStat(stat.current);
 
   return (
     <>
@@ -61,10 +84,12 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
             <span className="text-label text-muted">Current</span>
           </div>
           <div className={styles.figure}>
-            <span className={cx("stat-number", styles.figureValue, stat.peak === null && styles.muted)}>
-              {displayStat(stat.peak)}
+            <span className={cx("stat-number", styles.figureValue, stat.verifiedPeak === null && styles.muted)}>
+              {displayStat(stat.verifiedPeak)}
             </span>
-            <span className="text-label text-muted">Peak</span>
+            <span className="text-label text-muted">
+              Peak{stat.verifiedPeak === null && stat.current !== null ? <span className={styles.peakNote}>Not verified yet</span> : null}
+            </span>
           </div>
           <div className={styles.figure}>
             <span className={cx("stat-number", styles.figureValue)}>
@@ -83,7 +108,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
 
         <section className={styles.section} aria-labelledby="why-heading">
           <h2 id="why-heading" className="text-label text-muted">
-            Why {displayStat(stat.current)}?
+            Why this score?
           </h2>
           <ul className={styles.table}>
             {subdomains.map((sd) => (
@@ -100,8 +125,26 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
               </li>
             ))}
           </ul>
-          <p className={styles.note}>Only measured subdomains count. Missing ones lower Confidence, never the score.</p>
+          {adjusted ? (
+            <p className={styles.note}>
+              Measured results alone give {displayStat(estimate.observed)}. Some tests have no result yet, so ASCEND
+              holds the score to a cautious {displayStat(stat.current)} until they do. Missing results never count as
+              zero and never raise a Stat.
+            </p>
+          ) : (
+            <p className={styles.note}>
+              Missing results lower Confidence. They never count as zero and never raise a Stat.
+            </p>
+          )}
         </section>
+
+        {longitudinal && stat.current !== null && !longitudinal.eligible ? (
+          <p className={styles.calibrating}>
+            Provisional. Spawn sets your starting point; {label} can become verified after an independent result on a
+            later day — a reassessment, a verified workout or a Boss.
+            {attribute === "recovery" ? " Recovery also needs workload or sleep evidence." : ""}
+          </p>
+        ) : null}
 
         {confidence && stat.current !== null ? (
           <section className={styles.section} aria-labelledby="confidence-heading">
@@ -113,7 +156,7 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
                 [
                   ["Coverage", confidence.coverage, "Share of this Stat's subdomains measured"],
                   ["Recency", confidence.recency, "How recent the evidence is"],
-                  ["Repeatability", confidence.repeatability, "Consistency across repeated tests (default until repeated)"],
+                  ["Repeatability", confidence.repeatability, "Consistency across results on different days (default until repeated)"],
                   ["Quality", confidence.quality, "Measurement quality, lower with pain or capped results"],
                 ] as const
               ).map(([name, value, hint]) => (
@@ -142,7 +185,9 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
                 <li key={e.id} className={styles.tableRow}>
                   <span>
                     {testName(e.testKey)}
-                    <small>Spawn · {e.testKey}</small>
+                    <small>
+                      {SOURCE_LABEL[e.sourceType] ?? "Evidence"} · {e.testKey}
+                    </small>
                   </span>
                   <span className={styles.muted}>{formatDate(e.occurredAt)}</span>
                 </li>

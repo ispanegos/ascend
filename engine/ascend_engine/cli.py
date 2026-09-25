@@ -4,6 +4,7 @@
   python -m ascend_engine validate-config [version]
   python -m ascend_engine config [version]        # the parsed configuration as JSON
   python -m ascend_engine serve [--port 8765]     # HTTP, for hosting later
+  python -m ascend_engine audit                   # calibration audit (markdown)
 
 Exit codes: 0 success, 2 invalid input, 3 invalid configuration.
 """
@@ -43,6 +44,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 print(f"ok {config.engine_version} {config.config_hash}")
+            return 0
+        if command == "audit":
+            from .audit import main as audit
+
+            audit()
             return 0
         if command == "serve":
             from .server import serve

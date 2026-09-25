@@ -62,7 +62,8 @@ export function StatList({ stats, headingLevel = 2 }: { stats: AthleteStats; hea
                     ) : (
                       <>
                         <ConfidenceMeter value={stat.confidence} />
-                        {STATUS_TEXT[stat.status]} · {displayPercent(stat.confidence)}
+                        Confidence {displayPercent(stat.confidence)}
+                        {stat.status === "verified" ? " · Verified" : ""}
                       </>
                     )}
                   </span>

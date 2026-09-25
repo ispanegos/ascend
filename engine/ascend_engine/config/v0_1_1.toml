@@ -1,4 +1,8 @@
-# ASCEND Engine configuration — version 0.1.0
+# ASCEND Engine configuration — version 0.1.1
+#
+# 0.1.1 (Milestone 3.1) corrects scoring semantics of 0.1.0, which was never
+# deployed: Spawn alone cannot verify, repeatability is temporal, missing
+# evidence cannot raise a Stat, and Peak is split into provisional/verified.
 #
 # calibration_status = "provisional"
 #
@@ -17,7 +21,7 @@
 #     [normalization]). Only curves that say so use body mass.
 #   * No curve uses age, sex or height in v0.1.
 
-engine_version = "0.1.0"
+engine_version = "0.1.1"
 calibration_status = "provisional"
 calibration_note = "Internal v0.1 calibration. Not population norms, percentiles, rankings or medical thresholds."
 
@@ -33,8 +37,72 @@ max = 100.0
 verified_threshold = 0.70
 default_repeatability = 0.5
 # Coefficient of variation between comparable observations at which
-# repeatability reaches 0. Only used once two or more exist.
+# repeatability reaches 0. Only used once two independent observations exist.
 repeatability_cv_tolerance = 0.20
+# Initial calibration cap: until an attribute has a qualifying post-Spawn
+# verification event, its Confidence cannot exceed this. It must stay below
+# verified_threshold so Spawn alone can never verify (Milestone 3.1 §1).
+# Confidence is scaled (not clamped) into [0, cap] relative to the best
+# Confidence evidence can reach before verification, so less evidence still
+# means lower Confidence during the calibration phase.
+initial_calibration_cap = 0.69
+# Observations of the same test closer than this are one observation for
+# longitudinal repeatability and verification (same-day attempts improve
+# nothing but the result itself).
+independent_observation_min_hours = 24
+
+# ---------------------------------------------------------------------------
+# Verification (Milestone 3.1 §1, §6)
+# An attribute can leave the initial calibration cap only when evidence from a
+# qualifying source arrives at least independent_observation_min_hours after
+# its latest baseline (Spawn) evidence.
+# ---------------------------------------------------------------------------
+
+[verification]
+baseline_sources = ["spawn_test"]
+# Event types, not entry sources: how values were entered (manual or wearable)
+# is raw_payload.source and only affects quality. Ordinary workouts on
+# different days MAY contribute to verification once Milestone 5 defines
+# comparable, quality-checked workout evidence (ADR-036); completion alone
+# never will. Until then they do not qualify.
+qualifying_sources = ["reassessment", "boss", "verified_workout"]
+
+# Some attributes also need a particular kind of evidence before they can
+# verify. Recovery needs longitudinal workload or sleep evidence; heart-rate
+# recovery from one session is not enough.
+[verification.required_any_subdomain]
+recovery = ["workload_response", "sleep_recovery"]
+
+# ---------------------------------------------------------------------------
+# Missing-domain estimation (Milestone 3.1 §4)
+#
+# Unknown is not zero, and missing evidence must not raise a Stat. For each
+# unmeasured subdomain that a configured test *could* have measured (e.g. a
+# skipped test), the estimate is blended toward a conservative prior:
+#
+#   coverage = observed weight / weight of measurable subdomains
+#   blended  = observed_estimate × coverage + prior × (1 − coverage)
+#   estimate = min(observed_estimate, blended)
+#
+# Subdomains with no configured test (Recovery sleep/workload, all of Power)
+# do not pull the estimate down; they only lower Confidence.
+#
+# PROVISIONAL (approved for v0.1 only, ADR-036): to be reviewed against real
+# athlete data. The prior (20 = start of the internal "beginner" band) is
+# deliberately low but not zero. Guarantee: removing a subdomain the athlete scored at or above
+# the prior never raises the estimate; removing their best subdomain always
+# lowers it. For a removed subdomain scored below the prior (bottom of the
+# modeled range) the rise is bounded by weight × (prior − score).
+# ---------------------------------------------------------------------------
+
+[estimation.missing_prior]
+endurance = 20.0
+strength = 20.0
+power = 20.0
+core = 20.0
+mobility = 20.0
+agility = 20.0
+recovery = 20.0
 
 [confidence.weights]
 coverage = 0.45
@@ -57,8 +125,12 @@ window_days = 60
 boss = 1.00
 spawn_test = 0.90
 reassessment = 0.90
-wearable = 0.55
+verified_workout = 0.55
 workout = 0.25
+# `wearable` and `manual` are legacy event values from Milestone 2 that mix up
+# the entry source (raw_payload.source) with the event type. A wearable
+# measurement is not verified workout evidence: it weighs like a workout.
+wearable = 0.25
 manual = 0.10
 
 # Evidence quality is a product of these factors.
@@ -89,8 +161,9 @@ boss = 8.0
 # Which cap applies to each evidence source.
 [update.cap_for_source]
 workout = "workout"
+verified_workout = "verified_workout"
 manual = "workout"
-wearable = "verified_workout"
+wearable = "workout"
 spawn_test = "assessment"
 reassessment = "assessment"
 boss = "boss"
@@ -157,10 +230,22 @@ agility = 0.12
 recovery = 0.14
 
 # ---------------------------------------------------------------------------
-# Body-size normalization (spec §15; Milestone 3 brief §3)
-#   absolute: raw value
-#   relative: raw / body_mass_kg
-#   mixed:    raw / body_mass_kg ** mixed_exponent  (allometric scaling)
+# Body-size normalization (spec §15; Milestone 3 brief §3) — PROVISIONAL
+#
+# Why it exists: moving an external load is easier for a larger body, and
+# carrying or moving one's own body is harder. Without some adjustment a
+# heavier athlete would look stronger and a lighter one weaker for the same
+# relative capability.
+#
+#   absolute: raw value (no adjustment)
+#   relative: raw / body_mass_kg            — used for the farmer carry, where
+#             load relative to the athlete's own mass is what limits posture
+#   mixed:    raw / body_mass_kg ** 0.67    — used for loaded strength sets.
+#             Allometric scaling sits between absolute and relative so neither
+#             heavier nor lighter athletes are systematically favoured.
+#
+# These are provisional ASCEND choices, not validated standards. The raw,
+# unadjusted load always stays in the evidence and the calculation trace.
 # ---------------------------------------------------------------------------
 
 [normalization]
@@ -210,6 +295,8 @@ cap_s = 120.0
 # ---------------------------------------------------------------------------
 
 [curves.M01_squat_points]
+rationale = "Best of three attempts scored as depth (0–2) + heels grounded (1) + control (0–1). A clean, deep, heels-down squat is the top of what this screen can show."
+weakness = "Ordinal points treated as linear; the test ceiling (4 points → 65) cannot separate mobile athletes; depth is self-judged."
 test = "M01"
 feature = "squat_points_best"
 direction = "increasing"
@@ -217,6 +304,8 @@ body_mass_mode = "none"
 points = [[0.0, 10.0], [1.0, 22.0], [2.0, 35.0], [3.0, 50.0], [4.0, 65.0]]
 
 [curves.M02_ankle_mean_cm]
+rationale = "Mean toe-to-wall distance of both sides. Around 10 cm is commonly treated as adequate ankle range in knee-to-wall screening, so it sits mid-scale."
+weakness = "Mean hides asymmetry (kept as a trace feature, not scored); foot length is not accounted for."
 test = "M02"
 feature = "ankle_mean_cm"
 direction = "increasing"
@@ -224,6 +313,8 @@ body_mass_mode = "none"
 points = [[0.0, 10.0], [4.0, 25.0], [8.0, 40.0], [10.0, 50.0], [12.0, 60.0], [15.0, 75.0]]
 
 [curves.M03_shoulder_reach_cm]
+rationale = "Mean reach across both sides (overlap positive). Fingertips touching sits mid-scale; categories are converted to an equivalent reach when no distance was measured."
+weakness = "Category conversion is coarse (quality is reduced when used); arm length and self-measurement are not accounted for."
 test = "M03"
 feature = "shoulder_reach_mean_cm"
 direction = "increasing"
@@ -231,6 +322,8 @@ body_mass_mode = "none"
 points = [[-30.0, 10.0], [-20.0, 20.0], [-10.0, 35.0], [0.0, 50.0], [5.0, 62.0], [10.0, 72.0]]
 
 [curves.M04_balance_s]
+rationale = "Mean of each leg's best single-leg stance time. 60 s cap maps to 65 so the test cannot claim elite balance."
+weakness = "Eyes-open stance saturates quickly for trained athletes; the cap makes high results a lower bound (flagged censored)."
 test = "M04"
 feature = "balance_best_mean_s"
 direction = "increasing"
@@ -238,6 +331,8 @@ body_mass_mode = "none"
 points = [[0.0, 5.0], [5.0, 15.0], [15.0, 30.0], [30.0, 45.0], [45.0, 55.0], [60.0, 65.0]]
 
 [curves.M05_sit_reach_cm]
+rationale = "Fingertip reach relative to toes. Reaching the toes sits just below mid-scale; positive reach rises slowly."
+weakness = "Influenced by limb proportions; one reach, no repeat; box setup varies at home."
 test = "M05"
 feature = "sit_reach_cm"
 direction = "increasing"
@@ -245,12 +340,16 @@ body_mass_mode = "none"
 points = [[-30.0, 10.0], [-15.0, 25.0], [-5.0, 40.0], [0.0, 48.0], [5.0, 58.0], [10.0, 68.0], [20.0, 80.0]]
 
 [curves.M06_dead_bug]
+rationale = "Self-rated quality of 10 reps per side: clean / completed with compensation / unable."
+weakness = "Three categories only and self-judged; cannot separate good from excellent trunk control."
 test = "M06"
 feature = "dead_bug_quality"
 kind = "categorical"
 map = { clean = 55.0, completed_with_compensation = 38.0, unable = 15.0 }
 
 [curves.M07_time_s]
+rationale = "Best time of the 16 m forward–lateral–backward–lateral rectangle. About 8 s sits in the upper-middle; walking pace (16–20 s) sits at the bottom."
+weakness = "Home timing is imprecise (manual stopwatch); surface and turning technique affect times; no published reference for this exact layout."
 test = "M07"
 feature = "agility_best_time_s"
 direction = "decreasing"
@@ -258,6 +357,8 @@ body_mass_mode = "none"
 points = [[6.0, 80.0], [7.0, 70.0], [8.0, 60.0], [9.5, 48.0], [11.0, 38.0], [13.0, 28.0], [16.0, 18.0], [20.0, 10.0]]
 
 [curves.M07_error_index]
+rationale = "Mean errors per attempt plus 2 × the share of attempts with a balance loss. Zero errors and no loss of balance maps to 70."
+weakness = "Error counting is self-reported; error weights are an assumption."
 test = "M07"
 feature = "agility_error_index"
 direction = "decreasing"
@@ -265,6 +366,8 @@ body_mass_mode = "none"
 points = [[0.0, 70.0], [0.5, 60.0], [1.0, 50.0], [2.0, 38.0], [4.0, 22.0], [8.0, 10.0]]
 
 [curves.F01_push_equivalent_reps]
+rationale = "Clean push-up reps; incline reps are converted to standard-equivalent reps by hand height before scoring. Around 30 clean standard reps sits mid-scale."
+weakness = "The incline conversion factors are estimates; bodyweight movement so no body-mass normalization, which favours lighter athletes slightly."
 test = "F01"
 feature = "push_equivalent_reps"
 direction = "increasing"
@@ -272,6 +375,8 @@ body_mass_mode = "none"
 points = [[0.0, 10.0], [5.0, 22.0], [10.0, 32.0], [20.0, 45.0], [30.0, 55.0], [40.0, 63.0], [50.0, 70.0]]
 
 [curves.F02_goblet_index]
+rationale = "Best set's ten-rep-equivalent load (load × reps/10 × technique factor), divided by body mass^0.67."
+weakness = "Linear rep conversion is crude below 10 reps; kettlebell inventory often caps the result (flagged censored); allometric exponent is provisional."
 test = "F02"
 feature = "goblet_ten_rep_kg"
 direction = "increasing"
@@ -279,6 +384,8 @@ body_mass_mode = "mixed"
 points = [[0.0, 5.0], [0.3, 15.0], [0.6, 28.0], [1.0, 40.0], [1.4, 50.0], [1.8, 58.0], [2.4, 68.0]]
 
 [curves.F03_hinge_index]
+rationale = "Kettlebell deadlift ten-rep-equivalent load divided by body mass^0.67. Hinge loads are higher than squat loads, so the curve is stretched."
+weakness = "Home equipment frequently caps the result; one or two implements change the lift; exponent provisional."
 test = "F03"
 feature = "hinge_ten_rep_kg"
 direction = "increasing"
@@ -286,6 +393,8 @@ body_mass_mode = "mixed"
 points = [[0.0, 5.0], [0.6, 15.0], [1.2, 28.0], [2.0, 40.0], [2.8, 50.0], [3.6, 58.0], [4.8, 68.0]]
 
 [curves.F04_row_index]
+rationale = "Bent-over row ten-rep-equivalent load per arm (one-arm: implement load; two-arm: total ÷ 2) divided by body mass^0.67."
+weakness = "One-arm and two-arm rows are treated as equivalent per arm; torso angle is not controlled."
 test = "F04"
 feature = "row_ten_rep_kg_per_arm"
 direction = "increasing"
@@ -293,6 +402,8 @@ body_mass_mode = "mixed"
 points = [[0.0, 5.0], [0.3, 15.0], [0.6, 28.0], [1.0, 40.0], [1.4, 50.0], [1.8, 58.0], [2.4, 68.0]]
 
 [curves.F04_pull_up_reps]
+rationale = "Strict pull-up reps when a bar is available. One rep is already meaningful pulling strength."
+weakness = "Bodyweight movement strongly penalises heavier athletes; only used when the athlete chooses pull-ups."
 test = "F04"
 feature = "pull_up_reps"
 direction = "increasing"
@@ -300,6 +411,8 @@ body_mass_mode = "none"
 points = [[0.0, 15.0], [1.0, 30.0], [3.0, 40.0], [6.0, 50.0], [10.0, 60.0], [15.0, 70.0]]
 
 [curves.F05_carry_core]
+rationale = "Farmer carry total load × minutes ÷ body mass, for loaded trunk stability. Carrying body mass for a minute sits in the upper-middle."
+weakness = "Combines load and duration linearly; the 60 s cap makes strong results a lower bound; posture judged by the athlete."
 test = "F05"
 feature = "carry_load_minutes_kg"
 direction = "increasing"
@@ -308,6 +421,8 @@ body_mass_mode = "relative"
 points = [[0.0, 5.0], [0.1, 15.0], [0.25, 28.0], [0.5, 42.0], [0.75, 52.0], [1.0, 62.0], [1.5, 75.0]]
 
 [curves.F05_carry_strength]
+rationale = "Same carry index for grip/carry strength, with a slightly lower curve because grip is the usual limit."
+weakness = "Shares one test with Core (the same evidence informs two attributes); distance is not used."
 test = "F05"
 feature = "carry_load_minutes_kg"
 direction = "increasing"
@@ -315,6 +430,8 @@ body_mass_mode = "relative"
 points = [[0.0, 5.0], [0.2, 18.0], [0.4, 30.0], [0.6, 40.0], [0.8, 50.0], [1.0, 58.0], [1.5, 70.0]]
 
 [curves.F06_plank_s]
+rationale = "Technical plank hold. 60 s sits just below mid-scale; the 120 s cap maps to 62 so holding longer cannot claim high capability."
+weakness = "Endurance-style hold; position loss is self-judged; the cap makes long holds a lower bound."
 test = "F06"
 feature = "plank_s"
 direction = "increasing"
@@ -322,6 +439,8 @@ body_mass_mode = "none"
 points = [[0.0, 5.0], [15.0, 15.0], [30.0, 25.0], [60.0, 40.0], [90.0, 52.0], [120.0, 62.0]]
 
 [curves.E02_walk_speed]
+rationale = "6-minute brisk-walk speed. 100 m/min (6 km/h) sits in the lower middle; 135 m/min (8.1 km/h) is near the top of walking."
+weakness = "Route, surface and GPS accuracy vary; the curve stops at 60 because walking speed saturates."
 test = "E02"
 feature = "walk_speed_m_per_min"
 direction = "increasing"
@@ -329,6 +448,8 @@ body_mass_mode = "none"
 points = [[60.0, 10.0], [75.0, 20.0], [90.0, 30.0], [105.0, 40.0], [120.0, 50.0], [135.0, 60.0]]
 
 [curves.E02_walk_hr_efficiency]
+rationale = "Walking speed per beat above resting heart rate: faster walking at a lower heart-rate rise scores higher."
+weakness = "Needs two optional HR readings; wrist HR accuracy varies; heat and caffeine affect HR."
 test = "E02"
 feature = "walk_hr_efficiency"
 direction = "increasing"
@@ -337,6 +458,8 @@ body_mass_mode = "none"
 points = [[0.5, 10.0], [1.0, 20.0], [1.5, 30.0], [2.0, 40.0], [2.5, 50.0], [3.0, 60.0], [4.0, 72.0]]
 
 [curves.E04_speed]
+rationale = "20-minute run/walk average speed. 150 m/min (9 km/h) sits around 40; 250 m/min (15 km/h) sits in the 60s."
+weakness = "Pacing strategy, route and GPS affect distance; one effort; not adjusted for terrain."
 test = "E04"
 feature = "run_walk_speed_m_per_min"
 direction = "increasing"
@@ -344,6 +467,8 @@ body_mass_mode = "none"
 points = [[60.0, 8.0], [80.0, 15.0], [100.0, 22.0], [120.0, 30.0], [150.0, 40.0], [180.0, 48.0], [210.0, 55.0], [250.0, 63.0], [300.0, 72.0]]
 
 [curves.E04_run_fraction]
+rationale = "Share of the 20 minutes spent running. Running throughout scores 55 on its own; speed is scored separately."
+weakness = "Self-estimated split; a slow continuous jog and a fast run score the same here."
 test = "E04"
 feature = "run_fraction"
 direction = "increasing"
@@ -351,6 +476,8 @@ body_mass_mode = "none"
 points = [[0.0, 15.0], [0.25, 25.0], [0.5, 35.0], [0.75, 45.0], [1.0, 55.0]]
 
 [curves.E04_hr_efficiency]
+rationale = "Run/walk speed per beat above resting heart rate, a proxy for aerobic efficiency."
+weakness = "Depends on optional HR and resting HR; average HR over 20 minutes includes drift."
 test = "E04"
 feature = "run_walk_hr_efficiency"
 direction = "increasing"
@@ -358,6 +485,8 @@ body_mass_mode = "none"
 points = [[0.6, 10.0], [0.9, 20.0], [1.2, 30.0], [1.5, 40.0], [1.8, 50.0], [2.1, 60.0], [2.6, 72.0]]
 
 [curves.E03_hr_drop_1min]
+rationale = "Heart-rate drop in the first minute after the brisk walk. A larger drop scores higher."
+weakness = "Walking effort before the test varies; standing vs walking during recovery changes the drop; not a medical measure."
 test = "E03"
 feature = "hr_drop_1min_bpm"
 direction = "increasing"
@@ -366,8 +495,10 @@ points = [[0.0, 5.0], [6.0, 15.0], [12.0, 28.0], [18.0, 40.0], [24.0, 50.0], [30
 
 # ---------------------------------------------------------------------------
 # Attributes → subdomains → sources (spec §15; weights sum to 1 per attribute)
-# A subdomain score is the weighted mean of its available sources. A subdomain
-# without evidence is left out (renormalized), never scored as zero.
+# A subdomain score is the weighted mean of its available sources, with the
+# same conservative missing-evidence estimate as attributes when one of
+# several complementary sources is missing (`alternatives = true` exempts
+# sources the athlete chooses between). Never scored as zero.
 # ---------------------------------------------------------------------------
 
 [attributes.endurance.subdomains.sustained_locomotion]
@@ -388,6 +519,8 @@ sources = [{ curve = "F01_push_equivalent_reps", weight = 1.0 }]
 
 [attributes.strength.subdomains.pull]
 weight = 0.20
+# Row or pull-up: the athlete does one, so the other is not missing evidence.
+alternatives = true
 sources = [{ curve = "F04_row_index", weight = 1.0 }, { curve = "F04_pull_up_reps", weight = 1.0 }]
 
 [attributes.strength.subdomains.knee_dominant]

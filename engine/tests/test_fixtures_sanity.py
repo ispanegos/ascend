@@ -33,9 +33,10 @@ def test_detrained_beginner_below_recreational_everywhere_measured():
         assert cur("A", attribute) < cur("B", attribute)
 
 
-def test_missing_tests_lower_confidence_not_capability():
+def test_missing_tests_lower_confidence_and_never_raise_capability():
     for attribute in ("endurance", "strength", "core"):
         assert conf("E", attribute) < conf("B", attribute)
+        assert cur("E", attribute) <= cur("B", attribute)
     assert R["E"]["attributes"]["recovery"]["status"] == "unranked"
     assert R["E"]["overall"]["current"] is not None
 
@@ -57,3 +58,14 @@ def test_all_values_in_range():
         for attribute in ATTRIBUTES:
             value = out["attributes"][attribute]["current"]
             assert value is None or 0 <= value <= 100
+
+
+def test_milestone_3_1_invariants():
+    assert cur("H", "strength") <= cur("B", "strength")
+    assert cur("I", "strength") <= cur("B", "strength")
+    assert R["J"]["attributes"]["strength"]["status"] == "provisional"
+    assert R["K"]["attributes"]["strength"]["status"] == "verified"
+    assert R["L"]["attributes"]["strength"]["status"] == "provisional"
+    for key in R:
+        for attribute in ATTRIBUTES:
+            assert R[key]["attributes"][attribute]["status"] != "verified" or key == "K"

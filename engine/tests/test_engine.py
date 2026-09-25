@@ -23,11 +23,13 @@ def replace_test(spawn: Spawn, test_key: str, **kwargs) -> Spawn:
 class TestCompleteSpawn:
     def test_initialized_athlete(self):
         out = calculate(athlete_b().payload())
-        assert out["engine_version"] == ASCEND_ENGINE_VERSION
+        assert out["engine_version"] == ASCEND_ENGINE_VERSION == "0.1.1"
         assert out["calibration_status"] == "provisional"
         for attribute in ("endurance", "strength", "core", "mobility", "agility"):
             assert out["attributes"][attribute]["current"] is not None
-            assert out["attributes"][attribute]["status"] == "verified"
+            # Spawn alone never verifies (Milestone 3.1 §1).
+            assert out["attributes"][attribute]["status"] == "provisional"
+            assert out["attributes"][attribute]["confidence"] <= 0.69
         assert out["attributes"]["power"]["status"] == "unranked"
         assert out["attributes"]["power"]["current"] is None
         assert out["attributes"]["recovery"]["status"] == "provisional"
@@ -37,9 +39,9 @@ class TestCompleteSpawn:
     def test_every_derived_value_carries_engine_version(self):
         out = calculate(athlete_b().payload())
         for stat in out["attributes"].values():
-            assert stat["trace"]["engine_version"] == "0.1.0"
+            assert stat["trace"]["engine_version"] == "0.1.1"
             assert stat["trace"]["config_hash"] == out["config_hash"]
-        assert out["overall"]["trace"]["engine_version"] == "0.1.0"
+        assert out["overall"]["trace"]["engine_version"] == "0.1.1"
 
     def test_scores_and_confidence_in_range_for_all_fixtures(self):
         for build in FIXTURES.values():
@@ -61,7 +63,9 @@ class TestTrace:
         assert set(trace["confidence"]) >= {"coverage", "recency", "repeatability", "quality", "value"}
         # The score is reproducible from the trace alone.
         rebuilt = sum(sub[n]["score"] * trace["weights"]["renormalized"][n] for n in trace["weights"]["renormalized"])
-        assert rebuilt == pytest.approx(endurance["current"], abs=1e-3)
+        assert rebuilt == pytest.approx(trace["estimate"]["observed"], abs=1e-3)
+        assert trace["estimate"]["value"] == pytest.approx(endurance["current"], abs=1e-3)
+        assert trace["longitudinal"]["verification_eligible"] is False
 
     def test_trace_records_body_mass_used_for_normalization(self):
         strength = stats(athlete_b().payload())["strength"]["trace"]
@@ -77,17 +81,18 @@ class TestTrace:
 
 
 class TestUnknownIsNotZero:
-    def test_missing_tests_reduce_confidence_not_score(self):
+    def test_missing_tests_reduce_confidence_and_never_raise_the_score(self):
         full = stats(athlete_b().payload())
         spawn = athlete_b()
         spawn.evidence = [e for e in spawn.evidence if e["test_key"] != "F04"]
         spawn.gap("F04", "skipped", "missing_equipment")
         partial = stats(spawn.payload())
-        assert partial["strength"]["confidence"] < full["strength"]["confidence"]
+        assert partial["strength"]["uncapped_confidence"] < full["strength"]["uncapped_confidence"]
         assert partial["strength"]["coverage"] == pytest.approx(0.8)
-        # The average of the other four subdomains — not the five with a zero.
+        assert partial["strength"]["current"] <= full["strength"]["current"]
+        # Not zero: well above what a zero for Pull would give.
         other = [full["strength"]["trace"]["subdomain_scores"][n]["score"] for n in ("push", "knee_dominant", "hinge", "carry_grip")]
-        assert partial["strength"]["current"] == pytest.approx(sum(other) / 4, abs=1e-3)
+        assert partial["strength"]["current"] > 0.8 * sum(other) / 4
         assert partial["strength"]["trace"]["gaps"] == [{"test_key": "F04", "status": "skipped", "reason_code": "missing_equipment"}]
 
     def test_no_evidence_is_unranked(self):
@@ -106,6 +111,7 @@ class TestUnknownIsNotZero:
         bracing = lambda s: s["core"]["trace"]["subdomain_scores"]["bracing"]["score"]  # noqa: E731
         assert bracing(painful) == pytest.approx(bracing(clean))
         assert painful["core"]["confidence"] < clean["core"]["confidence"]
+        assert painful["core"]["current"] == pytest.approx(clean["core"]["current"])
 
     def test_stopped_for_pain_is_a_gap_not_zero(self):
         spawn = athlete_b()
@@ -187,12 +193,13 @@ class TestDeterminism:
         newest = max(e["occurred_at"] for e in athlete_b().evidence)
         assert out["as_of"] == newest
 
-    def test_recalculation_with_previous_peak_never_lowers_peak(self):
+    def test_recalculation_with_previous_peaks_never_lowers_them(self):
         first = calculate(athlete_b().payload())
-        previous = {"attributes": {a: {"peak": 99.0} for a in ATTRIBUTES}}
+        previous = {"attributes": {a: {"verified_peak": 99.0, "provisional_peak": 99.5} for a in ATTRIBUTES}}
         second = calculate(athlete_b().payload(previous=previous))
         for attribute in ("strength", "mobility"):
-            assert second["attributes"][attribute]["peak"] == 99.0
+            assert second["attributes"][attribute]["verified_peak"] == 99.0
+            assert second["attributes"][attribute]["provisional_peak"] == 99.5
             assert second["attributes"][attribute]["current"] == first["attributes"][attribute]["current"]
 
 

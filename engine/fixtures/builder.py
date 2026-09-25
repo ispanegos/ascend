@@ -36,16 +36,18 @@ class Spawn:
         pain: bool = False,
         source: str = "manual",
         days_after: float = 0.0,
+        hours_after: float = 0.0,
+        source_type: str = "spawn_test",
     ) -> "Spawn":
         index = _TEST_ORDER.index(test_key)
         # Movement day 0, Frame day 2, Engine day 4: realistic multi-day Spawn.
         day = {"M": 0, "F": 2, "E": 4}[test_key[0]]
-        occurred = BASE_TIME + timedelta(days=day + days_after, minutes=index * 6)
+        occurred = BASE_TIME + timedelta(days=day + days_after, hours=hours_after, minutes=index * 6)
         self.evidence.append(
             {
                 "id": f"{self.athlete_id}-{test_key}-{len(self.evidence) + 1}",
                 "test_key": test_key,
-                "source_type": "spawn_test",
+                "source_type": source_type,
                 "occurred_at": occurred.isoformat().replace("+00:00", "Z"),
                 "raw_payload": {
                     "protocol_version": "0.1.0",

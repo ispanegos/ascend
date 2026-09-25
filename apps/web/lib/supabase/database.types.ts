@@ -964,10 +964,11 @@ export type Database = {
           engine_version: string
           evidence_ids: string[]
           id: string
-          peak: number | null
-          peak_updated: boolean
+          provisional_peak: number | null
           status: string
           trace: Json
+          verified_peak: number | null
+          verified_peak_updated: boolean
         }
         Insert: {
           athlete_id: string
@@ -980,10 +981,11 @@ export type Database = {
           engine_version: string
           evidence_ids?: string[]
           id?: string
-          peak?: number | null
-          peak_updated?: boolean
+          provisional_peak?: number | null
           status: string
           trace: Json
+          verified_peak?: number | null
+          verified_peak_updated?: boolean
         }
         Update: {
           athlete_id?: string
@@ -996,10 +998,11 @@ export type Database = {
           engine_version?: string
           evidence_ids?: string[]
           id?: string
-          peak?: number | null
-          peak_updated?: boolean
+          provisional_peak?: number | null
           status?: string
           trace?: Json
+          verified_peak?: number | null
+          verified_peak_updated?: boolean
         }
         Relationships: [
           {

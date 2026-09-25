@@ -1,7 +1,12 @@
-"""Current and Peak (spec §7).
+"""Current, provisional Peak and verified Peak (spec §7, Milestone 3.1 §5).
 
-Current is the best current estimate and can move either way. Peak is the
-highest *verified* Current and never decreases or decays.
+* Current — best current estimate; can move either way.
+* Provisional Peak — highest Current ever recorded, verified or not. A
+  historical maximum, not a claim of verified capability.
+* Verified Peak — highest Current recorded while the Stat was VERIFIED.
+  This is the Peak the product may present as proven.
+
+Neither Peak ever decreases or decays.
 """
 
 from __future__ import annotations
@@ -10,27 +15,32 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class CurrentPeak:
+class Peaks:
     current: float | None
-    peak: float | None
-    peak_updated: bool
+    provisional_peak: float | None
+    verified_peak: float | None
+    provisional_updated: bool
+    verified_updated: bool
 
 
-def resolve_peak(
+def _higher(previous: float | None, candidate: float | None) -> tuple[float | None, bool]:
+    if candidate is None or (previous is not None and candidate <= previous):
+        return previous, False
+    return candidate, True
+
+
+def resolve_peaks(
     current: float | None,
     confidence: float,
-    previous_peak: float | None,
+    previous_provisional: float | None,
+    previous_verified: float | None,
     verified_threshold: float,
     evidence_valid: bool = True,
-) -> CurrentPeak:
-    peak = previous_peak
-    updated = False
-    if (
-        current is not None
-        and evidence_valid
-        and confidence >= verified_threshold
-        and (previous_peak is None or current > previous_peak)
-    ):
-        peak = current
-        updated = True
-    return CurrentPeak(current=current, peak=peak, peak_updated=updated)
+) -> Peaks:
+    candidate = current if evidence_valid else None
+    provisional, provisional_updated = _higher(previous_provisional, candidate)
+    verified_candidate = candidate if confidence >= verified_threshold else None
+    verified, verified_updated = _higher(previous_verified, verified_candidate)
+    # The provisional maximum always includes every verified maximum.
+    provisional, extra = _higher(provisional, verified)
+    return Peaks(current, provisional, verified, provisional_updated or extra, verified_updated)

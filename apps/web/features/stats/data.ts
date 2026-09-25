@@ -8,7 +8,10 @@ import { createClient } from "@/lib/supabase/server";
 export interface StatView {
   attribute: AttributeKey;
   current: number | null;
-  peak: number | null;
+  /** Highest Current while VERIFIED; null until the Stat has been verified. */
+  verifiedPeak: number | null;
+  /** Highest Current ever calculated; a historical maximum, not verified capability. */
+  provisionalPeak: number | null;
   confidence: number;
   coverage: number;
   status: StatStatus;
@@ -65,7 +68,8 @@ export async function getLatestStats(userId: string): Promise<AthleteStats | nul
     stats[row.attribute] = {
       attribute: row.attribute,
       current: toNumber(row.current),
-      peak: toNumber(row.peak),
+      verifiedPeak: toNumber(row.verified_peak),
+      provisionalPeak: toNumber(row.provisional_peak),
       confidence: Number(row.confidence),
       coverage: Number(row.coverage),
       status: asStatus(row.status),
@@ -96,6 +100,7 @@ export interface EvidenceView {
   id: string;
   testKey: string;
   occurredAt: string;
+  sourceType: string;
 }
 
 export interface StatDetail {
@@ -122,14 +127,26 @@ export async function getStatDetail(userId: string, attribute: AttributeKey): Pr
       .limit(1)
       .maybeSingle(),
     stat.evidenceIds.length
-      ? supabase.from("performance_evidence").select("id, test_key, occurred_at").in("id", stat.evidenceIds).order("occurred_at")
-      : Promise.resolve({ data: [] as Array<{ id: string; test_key: string | null; occurred_at: string }>, error: null }),
+      ? supabase
+          .from("performance_evidence")
+          .select("id, test_key, occurred_at, source_type")
+          .in("id", stat.evidenceIds)
+          .order("occurred_at")
+      : Promise.resolve({
+          data: [] as Array<{ id: string; test_key: string | null; occurred_at: string; source_type: string }>,
+          error: null,
+        }),
   ]);
   return {
     stat,
     engineVersion: latest.engineVersion,
     calibrationStatus: latest.calibrationStatus,
     lastVerifiedAt: verified.data?.calculated_at ?? null,
-    evidence: (evidence.data ?? []).map((e) => ({ id: e.id, testKey: e.test_key ?? "", occurredAt: e.occurred_at })),
+    evidence: (evidence.data ?? []).map((e) => ({
+      id: e.id,
+      testKey: e.test_key ?? "",
+      occurredAt: e.occurred_at,
+      sourceType: e.source_type,
+    })),
   };
 }
