@@ -1,0 +1,470 @@
+# ASCEND Engine configuration — version 0.1.0
+#
+# calibration_status = "provisional"
+#
+# These are INTERNAL CALIBRATION CURVES for a personal v0.1 build. They map
+# raw test results onto ASCEND's own 0–100 scale (spec §4). They are not
+# population norms, percentiles, rankings or medical thresholds, and must
+# never be presented as such. Every value here is expected to change as
+# evidence accumulates (spec §73).
+#
+# Conventions
+#   * Curves are monotonic piecewise-linear: points = [[raw, score], ...] with
+#     strictly increasing raw values. `direction` says whether a higher raw
+#     value means a higher ("increasing") or lower ("decreasing") score.
+#     Outside the first/last point the end score is held (no extrapolation).
+#   * body_mass_mode: "none" | "absolute" | "relative" | "mixed" (see
+#     [normalization]). Only curves that say so use body mass.
+#   * No curve uses age, sex or height in v0.1.
+
+engine_version = "0.1.0"
+calibration_status = "provisional"
+calibration_note = "Internal v0.1 calibration. Not population norms, percentiles, rankings or medical thresholds."
+
+[scale]
+min = 0.0
+max = 100.0
+
+# ---------------------------------------------------------------------------
+# Confidence (spec §6)
+# ---------------------------------------------------------------------------
+
+[confidence]
+verified_threshold = 0.70
+default_repeatability = 0.5
+# Coefficient of variation between comparable observations at which
+# repeatability reaches 0. Only used once two or more exist.
+repeatability_cv_tolerance = 0.20
+
+[confidence.weights]
+coverage = 0.45
+recency = 0.25
+repeatability = 0.15
+quality = 0.15
+
+# Recency factor for confidence: 1.0 within the attribute's grace period,
+# then linear down to `floor` over `window_days`.
+[recency]
+floor = 0.2
+window_days = 60
+
+# ---------------------------------------------------------------------------
+# Evidence (spec §5)
+# ---------------------------------------------------------------------------
+
+# Update weights, not Stat points.
+[evidence.weights]
+boss = 1.00
+spawn_test = 0.90
+reassessment = 0.90
+wearable = 0.55
+workout = 0.25
+manual = 0.10
+
+# Evidence quality is a product of these factors.
+[evidence.quality]
+manual_entry = 0.85
+wearable_entry = 0.95
+# Pain during a completed test: the result is kept (never zero) but trusted less.
+pain_reported = 0.70
+# The result hit a test cap or the equipment ceiling: it is a lower bound.
+censored = 0.85
+# Shoulder reach estimated from a category instead of a measured distance.
+category_estimate = 0.90
+
+# ---------------------------------------------------------------------------
+# Updates from new evidence (spec §16)
+# ---------------------------------------------------------------------------
+
+[update]
+# confidenceAdjustment = 1 - confidence_damping * current confidence
+confidence_damping = 0.5
+
+[update.caps]
+workout = 1.0
+verified_workout = 2.0
+assessment = 5.0
+boss = 8.0
+
+# Which cap applies to each evidence source.
+[update.cap_for_source]
+workout = "workout"
+manual = "workout"
+wearable = "verified_workout"
+spawn_test = "assessment"
+reassessment = "assessment"
+boss = "boss"
+
+# ---------------------------------------------------------------------------
+# Decay (spec §17). Never daily punishment; Peak never decays.
+# Current regresses only after `grace_days` without relevant evidence, by at
+# most `points_per_week`, and never below `retained_fraction` of the Current
+# at the last evidence.
+# ---------------------------------------------------------------------------
+
+[decay.endurance]
+grace_days = 14
+points_per_week = 0.5
+retained_fraction = 0.85
+
+[decay.recovery]
+grace_days = 10
+points_per_week = 0.5
+retained_fraction = 0.85
+
+[decay.strength]
+grace_days = 21
+points_per_week = 0.3
+retained_fraction = 0.90
+
+[decay.power]
+grace_days = 21
+points_per_week = 0.3
+retained_fraction = 0.90
+
+[decay.core]
+grace_days = 21
+points_per_week = 0.3
+retained_fraction = 0.90
+
+[decay.agility]
+grace_days = 21
+points_per_week = 0.3
+retained_fraction = 0.90
+
+# Mobility changes on direct evidence, not on time (spec §17).
+[decay.mobility]
+grace_days = 30
+points_per_week = 0.0
+retained_fraction = 1.0
+
+# ---------------------------------------------------------------------------
+# Overall (spec §8)
+# ---------------------------------------------------------------------------
+
+[overall]
+weighted_mean_share = 0.80
+lowest_three_share = 0.20
+required_attributes = ["endurance", "strength", "core", "mobility", "agility"]
+
+[overall.weights]
+endurance = 0.18
+strength = 0.18
+power = 0.12
+core = 0.14
+mobility = 0.12
+agility = 0.12
+recovery = 0.14
+
+# ---------------------------------------------------------------------------
+# Body-size normalization (spec §15; Milestone 3 brief §3)
+#   absolute: raw value
+#   relative: raw / body_mass_kg
+#   mixed:    raw / body_mass_kg ** mixed_exponent  (allometric scaling)
+# ---------------------------------------------------------------------------
+
+[normalization]
+mixed_exponent = 0.67
+
+# ---------------------------------------------------------------------------
+# Feature extraction parameters
+# ---------------------------------------------------------------------------
+
+[features.M01]
+# Points per attempt; best attempt is scored. Range 0–4.
+depth_points = { above_parallel = 0.0, parallel = 1.0, below_parallel = 2.0 }
+heels_points = { grounded = 1.0, lift = 0.0 }
+control_points = { stable = 1.0, compensation = 0.5, balance_loss = 0.0 }
+
+[features.M03]
+# Equivalent reach (cm, positive = overlap) when only a category was recorded.
+category_reach_cm = { overlap = 3.0, touch = 0.0, within_hand = -10.0, beyond_hand = -22.0 }
+
+[features.M04]
+cap_s = 60.0
+
+[features.M07]
+# Error index = mean errors per attempt + weight × share of attempts with a balance loss.
+balance_loss_weight = 2.0
+
+[features.strength_sets]
+# "Ten-rep-equivalent load" = load × min(reps, target) / target × technique factor.
+target_reps = 10
+technique_factor = { clean = 1.0, minor_compensation = 0.9, major_compensation = 0.75, stopped_for_technique = 0.7 }
+# A set counts as censored (a lower bound) when the athlete stopped adding load
+# only because nothing heavier was available and effort was at most this RPE.
+censored_max_rpe = 7
+
+[features.F01]
+# Incline push-ups count as fewer standard-equivalent reps: factor by hand height.
+incline_equivalence = [[0.0, 1.0], [30.0, 0.75], [45.0, 0.65], [60.0, 0.55], [90.0, 0.40], [150.0, 0.25]]
+
+[features.F05]
+cap_s = 60.0
+
+[features.F06]
+cap_s = 120.0
+
+# ---------------------------------------------------------------------------
+# Scoring curves (provisional)
+# ---------------------------------------------------------------------------
+
+[curves.M01_squat_points]
+test = "M01"
+feature = "squat_points_best"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 10.0], [1.0, 22.0], [2.0, 35.0], [3.0, 50.0], [4.0, 65.0]]
+
+[curves.M02_ankle_mean_cm]
+test = "M02"
+feature = "ankle_mean_cm"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 10.0], [4.0, 25.0], [8.0, 40.0], [10.0, 50.0], [12.0, 60.0], [15.0, 75.0]]
+
+[curves.M03_shoulder_reach_cm]
+test = "M03"
+feature = "shoulder_reach_mean_cm"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[-30.0, 10.0], [-20.0, 20.0], [-10.0, 35.0], [0.0, 50.0], [5.0, 62.0], [10.0, 72.0]]
+
+[curves.M04_balance_s]
+test = "M04"
+feature = "balance_best_mean_s"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 5.0], [5.0, 15.0], [15.0, 30.0], [30.0, 45.0], [45.0, 55.0], [60.0, 65.0]]
+
+[curves.M05_sit_reach_cm]
+test = "M05"
+feature = "sit_reach_cm"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[-30.0, 10.0], [-15.0, 25.0], [-5.0, 40.0], [0.0, 48.0], [5.0, 58.0], [10.0, 68.0], [20.0, 80.0]]
+
+[curves.M06_dead_bug]
+test = "M06"
+feature = "dead_bug_quality"
+kind = "categorical"
+map = { clean = 55.0, completed_with_compensation = 38.0, unable = 15.0 }
+
+[curves.M07_time_s]
+test = "M07"
+feature = "agility_best_time_s"
+direction = "decreasing"
+body_mass_mode = "none"
+points = [[6.0, 80.0], [7.0, 70.0], [8.0, 60.0], [9.5, 48.0], [11.0, 38.0], [13.0, 28.0], [16.0, 18.0], [20.0, 10.0]]
+
+[curves.M07_error_index]
+test = "M07"
+feature = "agility_error_index"
+direction = "decreasing"
+body_mass_mode = "none"
+points = [[0.0, 70.0], [0.5, 60.0], [1.0, 50.0], [2.0, 38.0], [4.0, 22.0], [8.0, 10.0]]
+
+[curves.F01_push_equivalent_reps]
+test = "F01"
+feature = "push_equivalent_reps"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 10.0], [5.0, 22.0], [10.0, 32.0], [20.0, 45.0], [30.0, 55.0], [40.0, 63.0], [50.0, 70.0]]
+
+[curves.F02_goblet_index]
+test = "F02"
+feature = "goblet_ten_rep_kg"
+direction = "increasing"
+body_mass_mode = "mixed"
+points = [[0.0, 5.0], [0.3, 15.0], [0.6, 28.0], [1.0, 40.0], [1.4, 50.0], [1.8, 58.0], [2.4, 68.0]]
+
+[curves.F03_hinge_index]
+test = "F03"
+feature = "hinge_ten_rep_kg"
+direction = "increasing"
+body_mass_mode = "mixed"
+points = [[0.0, 5.0], [0.6, 15.0], [1.2, 28.0], [2.0, 40.0], [2.8, 50.0], [3.6, 58.0], [4.8, 68.0]]
+
+[curves.F04_row_index]
+test = "F04"
+feature = "row_ten_rep_kg_per_arm"
+direction = "increasing"
+body_mass_mode = "mixed"
+points = [[0.0, 5.0], [0.3, 15.0], [0.6, 28.0], [1.0, 40.0], [1.4, 50.0], [1.8, 58.0], [2.4, 68.0]]
+
+[curves.F04_pull_up_reps]
+test = "F04"
+feature = "pull_up_reps"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 15.0], [1.0, 30.0], [3.0, 40.0], [6.0, 50.0], [10.0, 60.0], [15.0, 70.0]]
+
+[curves.F05_carry_core]
+test = "F05"
+feature = "carry_load_minutes_kg"
+direction = "increasing"
+body_mass_mode = "relative"
+# Raw feature: total load (kg) × duration (min). Relative: ÷ body mass.
+points = [[0.0, 5.0], [0.1, 15.0], [0.25, 28.0], [0.5, 42.0], [0.75, 52.0], [1.0, 62.0], [1.5, 75.0]]
+
+[curves.F05_carry_strength]
+test = "F05"
+feature = "carry_load_minutes_kg"
+direction = "increasing"
+body_mass_mode = "relative"
+points = [[0.0, 5.0], [0.2, 18.0], [0.4, 30.0], [0.6, 40.0], [0.8, 50.0], [1.0, 58.0], [1.5, 70.0]]
+
+[curves.F06_plank_s]
+test = "F06"
+feature = "plank_s"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 5.0], [15.0, 15.0], [30.0, 25.0], [60.0, 40.0], [90.0, 52.0], [120.0, 62.0]]
+
+[curves.E02_walk_speed]
+test = "E02"
+feature = "walk_speed_m_per_min"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[60.0, 10.0], [75.0, 20.0], [90.0, 30.0], [105.0, 40.0], [120.0, 50.0], [135.0, 60.0]]
+
+[curves.E02_walk_hr_efficiency]
+test = "E02"
+feature = "walk_hr_efficiency"
+direction = "increasing"
+body_mass_mode = "none"
+# Walking speed (m/min) per bpm above resting heart rate.
+points = [[0.5, 10.0], [1.0, 20.0], [1.5, 30.0], [2.0, 40.0], [2.5, 50.0], [3.0, 60.0], [4.0, 72.0]]
+
+[curves.E04_speed]
+test = "E04"
+feature = "run_walk_speed_m_per_min"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[60.0, 8.0], [80.0, 15.0], [100.0, 22.0], [120.0, 30.0], [150.0, 40.0], [180.0, 48.0], [210.0, 55.0], [250.0, 63.0], [300.0, 72.0]]
+
+[curves.E04_run_fraction]
+test = "E04"
+feature = "run_fraction"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 15.0], [0.25, 25.0], [0.5, 35.0], [0.75, 45.0], [1.0, 55.0]]
+
+[curves.E04_hr_efficiency]
+test = "E04"
+feature = "run_walk_hr_efficiency"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.6, 10.0], [0.9, 20.0], [1.2, 30.0], [1.5, 40.0], [1.8, 50.0], [2.1, 60.0], [2.6, 72.0]]
+
+[curves.E03_hr_drop_1min]
+test = "E03"
+feature = "hr_drop_1min_bpm"
+direction = "increasing"
+body_mass_mode = "none"
+points = [[0.0, 5.0], [6.0, 15.0], [12.0, 28.0], [18.0, 40.0], [24.0, 50.0], [30.0, 60.0], [40.0, 72.0], [50.0, 80.0]]
+
+# ---------------------------------------------------------------------------
+# Attributes → subdomains → sources (spec §15; weights sum to 1 per attribute)
+# A subdomain score is the weighted mean of its available sources. A subdomain
+# without evidence is left out (renormalized), never scored as zero.
+# ---------------------------------------------------------------------------
+
+[attributes.endurance.subdomains.sustained_locomotion]
+weight = 0.35
+sources = [{ curve = "E02_walk_speed", weight = 0.4 }, { curve = "E04_run_fraction", weight = 0.6 }]
+
+[attributes.endurance.subdomains.cardiovascular_response]
+weight = 0.25
+sources = [{ curve = "E04_hr_efficiency", weight = 0.7 }, { curve = "E02_walk_hr_efficiency", weight = 0.3 }]
+
+[attributes.endurance.subdomains.pace_distance]
+weight = 0.40
+sources = [{ curve = "E04_speed", weight = 1.0 }]
+
+[attributes.strength.subdomains.push]
+weight = 0.20
+sources = [{ curve = "F01_push_equivalent_reps", weight = 1.0 }]
+
+[attributes.strength.subdomains.pull]
+weight = 0.20
+sources = [{ curve = "F04_row_index", weight = 1.0 }, { curve = "F04_pull_up_reps", weight = 1.0 }]
+
+[attributes.strength.subdomains.knee_dominant]
+weight = 0.20
+sources = [{ curve = "F02_goblet_index", weight = 1.0 }]
+
+[attributes.strength.subdomains.hinge]
+weight = 0.20
+sources = [{ curve = "F03_hinge_index", weight = 1.0 }]
+
+[attributes.strength.subdomains.carry_grip]
+weight = 0.20
+sources = [{ curve = "F05_carry_strength", weight = 1.0 }]
+
+[attributes.core.subdomains.anti_extension_control]
+weight = 0.35
+sources = [{ curve = "M06_dead_bug", weight = 1.0 }]
+
+[attributes.core.subdomains.bracing]
+weight = 0.35
+sources = [{ curve = "F06_plank_s", weight = 1.0 }]
+
+[attributes.core.subdomains.loaded_stability]
+weight = 0.30
+sources = [{ curve = "F05_carry_core", weight = 1.0 }]
+
+[attributes.mobility.subdomains.ankle]
+weight = 0.25
+sources = [{ curve = "M02_ankle_mean_cm", weight = 1.0 }]
+
+[attributes.mobility.subdomains.squat_pattern]
+weight = 0.25
+sources = [{ curve = "M01_squat_points", weight = 1.0 }]
+
+[attributes.mobility.subdomains.shoulder]
+weight = 0.25
+sources = [{ curve = "M03_shoulder_reach_cm", weight = 1.0 }]
+
+[attributes.mobility.subdomains.posterior_chain]
+weight = 0.25
+sources = [{ curve = "M05_sit_reach_cm", weight = 1.0 }]
+
+[attributes.agility.subdomains.balance_control]
+weight = 0.35
+sources = [{ curve = "M04_balance_s", weight = 1.0 }]
+
+[attributes.agility.subdomains.change_of_direction]
+weight = 0.40
+sources = [{ curve = "M07_time_s", weight = 1.0 }]
+
+[attributes.agility.subdomains.movement_accuracy]
+weight = 0.25
+sources = [{ curve = "M07_error_index", weight = 1.0 }]
+
+# No Spawn test measures Power (spec §13): these stay empty until safe
+# power observations exist, so Power stays UNRANKED rather than zero.
+[attributes.power.subdomains.explosive_lower_body]
+weight = 0.40
+sources = []
+
+[attributes.power.subdomains.explosive_hinge]
+weight = 0.35
+sources = []
+
+[attributes.power.subdomains.explosive_upper_body]
+weight = 0.25
+sources = []
+
+[attributes.recovery.subdomains.acute_hr_recovery]
+weight = 0.40
+sources = [{ curve = "E03_hr_drop_1min", weight = 1.0 }]
+
+# Need workload and sleep data (Milestones 5 and 7).
+[attributes.recovery.subdomains.workload_response]
+weight = 0.30
+sources = []
+
+[attributes.recovery.subdomains.sleep_recovery]
+weight = 0.30
+sources = []
