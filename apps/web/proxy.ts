@@ -33,6 +33,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Everything except static assets, PWA files and image optimisation.
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|icons/|manifest.webmanifest|sw.js|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|icons/|art/|manifest.webmanifest|sw.js|robots.txt).*)",
   ],
 };

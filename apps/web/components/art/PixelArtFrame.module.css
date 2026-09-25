@@ -1,0 +1,34 @@
+/* Notched corners: a 4px step cut from each corner of the frame. */
+.frame {
+  --frame: var(--border-strong);
+  position: relative;
+  padding: 2px;
+  background: var(--frame);
+  clip-path: polygon(
+    0 4px, 4px 4px, 4px 0,
+    calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+  );
+}
+
+.frame > * {
+  clip-path: polygon(
+    0 2px, 2px 2px, 2px 0,
+    calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px,
+    100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%,
+    2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px)
+  );
+}
+
+.gold {
+  --frame: var(--border-highlight);
+}
+
+.boss {
+  --frame: var(--boss-accent);
+}
+
+.data {
+  --frame: var(--border-data);
+}

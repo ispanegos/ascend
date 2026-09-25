@@ -1,33 +1,39 @@
-// Generates PWA icons from the ASCEND glyph. Run: npm run icons -w @ascend/web
+// Generates PWA icons from the ASCEND gate rune (Design System V2 §10).
+// Run: npm run icons -w @ascend/web
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { PIXEL_ICONS } from "../components/ui/pixel-icons.ts";
 
-const BRAND = "#173e30";
-const ON_BRAND = "#ffffff";
+const BG = "#07141b";
+const GOLD = "#f3b24f";
+const CREAM = "#f2e3c2";
 const root = new URL("..", import.meta.url);
 const out = (path) => fileURLToPath(new URL(path, root));
 
-// Rising line on brand green — spec §27, not a mountain.
-// `inset` is the fraction of the canvas reserved as padding.
+/** The gate rune as crisp pixels; `inset` is the fraction reserved as padding. */
 function glyph({ rounded, inset }) {
   const s = 512;
   const pad = s * inset;
-  const inner = s - pad * 2;
-  const p = (x, y) => `${pad + (x / 32) * inner},${pad + (y / 32) * inner}`;
-  const stroke = (2.6 / 32) * inner;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s} ${s}">
-  <rect width="${s}" height="${s}" rx="${rounded ? s * 0.22 : 0}" fill="${BRAND}"/>
-  <path d="M${p(7.5, 22.5)} L${p(13, 16)} L${p(17, 19.5)} L${p(24.5, 10.5)}"
-    fill="none" stroke="${ON_BRAND}" stroke-width="${stroke}"
-    stroke-linecap="round" stroke-linejoin="round"/>
+  const cell = (s - pad * 2) / 16;
+  let rects = "";
+  PIXEL_ICONS.ascend.forEach((row, y) =>
+    [...row].forEach((ch, x) => {
+      if (ch === ".") return;
+      const [fill, opacity] = ch === "h" ? [CREAM, 0.92] : [GOLD, ch === "f" ? 0.42 : 1];
+      rects += `<rect x="${pad + x * cell}" y="${pad + y * cell}" width="${cell + 0.5}" height="${cell + 0.5}" fill="${fill}" fill-opacity="${opacity}"/>`;
+    }),
+  );
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges">
+  <rect width="${s}" height="${s}" rx="${rounded ? s * 0.22 : 0}" fill="${BG}"/>
+  ${rects}
 </svg>`;
 }
 
-const standard = glyph({ rounded: true, inset: 0 });
+const standard = glyph({ rounded: true, inset: 0.16 });
 // Maskable icons keep content inside the central 80% safe zone.
-const maskable = glyph({ rounded: false, inset: 0.12 });
-const fullBleed = glyph({ rounded: false, inset: 0 });
+const maskable = glyph({ rounded: false, inset: 0.24 });
+const fullBleed = glyph({ rounded: false, inset: 0.16 });
 
 await mkdir(out("public/icons"), { recursive: true });
 await writeFile(out("app/icon.svg"), standard);
@@ -41,6 +47,6 @@ const jobs = [
 ];
 
 for (const [svg, path, size] of jobs) {
-  await sharp(Buffer.from(svg)).resize(size, size).png().toFile(out(path));
+  await sharp(Buffer.from(svg)).resize(size, size, { kernel: "nearest" }).png().toFile(out(path));
   console.log(`wrote ${path}`);
 }
