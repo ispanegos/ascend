@@ -340,3 +340,17 @@ higher-resolution art with the `image-rendering` choice revisited), no
 changes to components, no copyrighted or stock art, mountains never the
 identity.
 
+## 16. Freeze
+
+Design System V2 is **frozen** as of `800bc79`. Functional milestones use it
+as-is. Its visual language changes only when:
+
+- a functional requirement cannot be represented with the existing system;
+- there is an accessibility problem;
+- there is a genuine responsive or layout bug.
+
+Artwork quality alone is **not** a reason to change the system. Deferred
+visual work (see §13 and §15): Today hero, Spawn origin, Ascend map, Boss
+guardian, Quest scenes and empty/locked illustrations (the Artwork Pass), and
+adaptive `AthleteBodyAvatar` morphology.
+
