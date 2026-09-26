@@ -382,7 +382,7 @@ test.describe("Spawn journey", () => {
 
 test.describe("onboarding resume and validation", () => {
   test("the main shell is locked during Spawn; Profile stays reachable", async ({ page }) => {
-    await signUpFresh(page, "Locked Athlete");
+    await signUpFresh(page, "Casey Lee");
     for (const path of ["/today", "/stats", "/ascend", "/bosses", "/stats/strength"]) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/spawn\/body\/welcome$/);
@@ -395,7 +395,7 @@ test.describe("onboarding resume and validation", () => {
   });
 
   test("an under-18 date of birth is refused (ADR-023)", async ({ page }) => {
-    await signUpFresh(page, "Young Athlete");
+    await signUpFresh(page, "Robin Park");
     await press(page, "Create profile");
     await press(page, "Continue");
     const year = new Date().getFullYear() - 17;

@@ -3,8 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
-import { PixelArtFrame } from "@/components/art/PixelArtFrame";
-import { PixelIcon } from "@/components/ui/PixelIcon";
+import { AthleteBodyAvatar, type BodyMeasurements } from "@/components/body/AthleteBodyAvatar";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { signOut } from "@/features/auth/actions";
@@ -30,6 +29,17 @@ export default async function ProfilePage() {
   const user = await requireUser();
   const context = await getSerializableContext(user.id);
   const rows = profileSummary(context);
+  const value = (kind: string) => context.body[kind]?.value ?? null;
+  const measurements: BodyMeasurements = {
+    height_cm: context.profile.height_cm === null ? null : Number(context.profile.height_cm),
+    weight_kg: value("weight"),
+    body_fat_percentage: value("body_fat"),
+    waist_cm: value("waist"),
+    chest_cm: value("chest"),
+    hips_cm: value("hip"),
+    arm_cm: value("arm"),
+    thigh_cm: value("thigh"),
+  };
   const supabase = await createClient();
   const { count: openFlags } = await supabase
     .from("movement_flags")
@@ -41,17 +51,14 @@ export default async function ProfilePage() {
       <ScreenHeader title="You" />
 
       <div className="stack stack--lg">
-        {/* Reserved for the neutral morphology avatar (V2 §22); not built yet. */}
         <section className={styles.identity} aria-label="Athlete">
-          <PixelArtFrame className={styles.avatarFrame}>
-            <span className={styles.avatar} data-slot="avatar">
-              <PixelIcon name="you" size={48} />
-            </span>
-          </PixelArtFrame>
-          <div className={styles.identityText}>
-            <p className={styles.identityName}>{context.profile.display_name ?? "Athlete"}</p>
-            <p className="text-muted text-small">Body, training context, equipment and availability.</p>
-          </div>
+          <p className={styles.identityName}>{context.profile.display_name ?? "Athlete"}</p>
+          <p className="text-muted text-small">Body, training context, equipment and availability.</p>
+        </section>
+
+        <section aria-labelledby="body-heading">
+          <SectionHeader id="body-heading" title="Athlete body" />
+          <AthleteBodyAvatar measurements={measurements} editHref="/profile/edit/measurements" />
         </section>
 
         <Card as="section" aria-labelledby="account-heading">

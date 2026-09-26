@@ -13,7 +13,7 @@ setup("sign up a test athlete", async ({ page }) => {
   const password = "correct-horse-battery";
 
   await page.goto("/sign-up");
-  await page.getByLabel("Name").fill("E2E Athlete");
+  await page.getByLabel("Name").fill("Jordan Blake");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Create account" }).click();

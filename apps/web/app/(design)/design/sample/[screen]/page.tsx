@@ -7,12 +7,14 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { AscendScreen } from "@/features/screens/AscendScreen";
 import { BossScreen } from "@/features/screens/BossScreen";
 import { QuestsScreen } from "@/features/screens/QuestsScreen";
-import { SAMPLE_ATHLETE, SAMPLE_BOSS, SAMPLE_QUESTS, SAMPLE_STATS } from "@/features/screens/samples";
+import { AthleteBodyAvatar } from "@/components/body/AthleteBodyAvatar";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SAMPLE_ATHLETE, SAMPLE_BODY, SAMPLE_BOSS, SAMPLE_QUESTS, SAMPLE_STATS } from "@/features/screens/samples";
 import { TodayScreen } from "@/features/screens/TodayScreen";
 import { WorkoutScreen } from "@/features/screens/WorkoutScreen";
 import { StatList } from "@/features/stats/StatList";
 
-const SCREENS = ["today", "quests", "ascend", "stats", "boss", "workout"] as const;
+const SCREENS = ["today", "quests", "ascend", "stats", "boss", "workout", "you"] as const;
 type Screen = (typeof SCREENS)[number];
 
 const NAV: Record<Screen, string | null> = {
@@ -22,6 +24,7 @@ const NAV: Record<Screen, string | null> = {
   stats: "/stats",
   boss: "/ascend",
   workout: null,
+  you: "/profile",
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ screen: string }> }): Promise<Metadata> {
@@ -95,6 +98,21 @@ export default async function SampleScreen({ params }: { params: Promise<{ scree
           requirements={SAMPLE_BOSS.requirements}
           action={<Button variant="boss">Face the Boss</Button>}
         />
+      );
+      break;
+    case "you":
+      body = (
+        <div className="stack stack--lg">
+          <ScreenHeader title="You" />
+          <div>
+            <p className="text-h2">{SAMPLE_ATHLETE.name}</p>
+            <p className="text-muted text-small">Body, training context, equipment and availability.</p>
+          </div>
+          <section>
+            <SectionHeader title="Athlete body" />
+            <AthleteBodyAvatar measurements={SAMPLE_BODY} editHref="/design/sample/you" />
+          </section>
+        </div>
       );
       break;
     case "workout":

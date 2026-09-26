@@ -10,6 +10,7 @@ const FRAMES = [
   ["stats", "Stats"],
   ["boss", "Boss"],
   ["workout", "Active workout"],
+  ["you", "You"],
 ] as const;
 
 /**

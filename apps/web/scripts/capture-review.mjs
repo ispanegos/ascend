@@ -1,5 +1,5 @@
 // Captures the Design System V2 review screens (sample content) at 390×844
-// and builds one composite: TODAY | QUESTS | ASCEND | STATS | BOSS | WORKOUT.
+// and builds one composite: TODAY | QUESTS | ASCEND | STATS | BOSS | WORKOUT | YOU.
 // Needs a running server with the gallery enabled (next dev, or
 // ASCEND_DESIGN_GALLERY=1) and a local athlete to sign in with:
 //   REVIEW_EMAIL=… REVIEW_PASSWORD=… node scripts/capture-review.mjs [baseURL]
@@ -17,6 +17,7 @@ const screens = [
   ["stats", "STATS"],
   ["boss", "BOSS"],
   ["workout", "WORKOUT"],
+  ["you", "YOU"],
 ];
 
 await mkdir(outDir, { recursive: true });

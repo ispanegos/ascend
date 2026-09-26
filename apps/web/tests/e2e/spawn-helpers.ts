@@ -7,7 +7,7 @@ export interface Credentials {
   password: string;
 }
 
-export async function signUpFresh(page: Page, name = "Spawn Athlete"): Promise<Credentials> {
+export async function signUpFresh(page: Page, name = "Alex Morgan"): Promise<Credentials> {
   const email = `spawn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@ascend.test`;
   const password = "correct-horse-battery";
   await page.goto("/sign-up");

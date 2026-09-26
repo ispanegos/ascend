@@ -1,27 +1,7 @@
 .identity {
-  display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.avatarFrame {
-  width: 88px;
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  background: radial-gradient(70% 70% at 50% 35%, var(--bg-elevated), var(--bg-deep));
-  color: var(--text-muted);
-}
-
-.identityText {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
 
 .identityName {

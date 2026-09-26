@@ -188,7 +188,7 @@ Engine `0.1.1`. Not deployed.
 - [x] Update caps, decay and determinism unchanged and tested
 - [x] Full regression: pytest, Vitest, pgTAP, Playwright, typecheck, lint, build
 
-## Design System V2 — visual redesign · `DONE (local) · awaiting visual approval`
+## Design System V2 — visual redesign · `DONE (local) · approved and closed`
 
 Dark-fantasy pixel-art visual language applied to every existing screen
 before Milestone 4 (ADR-037, `docs/DESIGN_SYSTEM_V2.md`). No engine,
@@ -203,7 +203,8 @@ scoring, Spawn or database behaviour changes.
 - Screens: auth, onboarding, Spawn Point, sessions, tests, Spawn Complete,
   Initializing, Initialized, Stats, Stat detail, Today, Quests, Ascend,
   Bosses, You; review gallery at `/design` (dev or `ASCEND_DESIGN_GALLERY=1`)
-- Screenshots: `docs/design/screens-v2/390`, `/320`
+- Screenshots: `docs/design/screens-v2/390`, `/320`; review composite `docs/design/review-v2/composite.png`
+- Pass 2 (ADR-038) and final polish (ADR-039): depth, detailed icons, screen compositions, `/design/review`, Athlete body on You. Artwork Pass deferred.
 
 ## Milestone 4 — Athlete dashboard · `NOT STARTED`
 

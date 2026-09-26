@@ -77,13 +77,14 @@
   font-size: var(--text-micro-size);
 }
 
+/* Confidence explains certainty; it stays subordinate to Current. */
 .meta,
 .rowMeta {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--text-secondary);
-  font-size: var(--text-meta-size);
+  color: var(--text-muted);
+  font-size: var(--text-label-size);
   font-variant-numeric: tabular-nums;
 }
 

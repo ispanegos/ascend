@@ -30,6 +30,11 @@ export interface TodayScreenProps {
   next: { title: string; text: string };
 }
 
+/** Greets by first name from the profile; "Athlete" when there is none. Never a Spawn state. */
+function firstName(name: string | null): string {
+  return name?.trim().split(/\s+/)[0] || "Athlete";
+}
+
 const round = (value: number | null) => (value === null ? "—" : String(Math.round(value)));
 
 /**
@@ -56,7 +61,7 @@ export function TodayScreen({ name, dayLabel, overall, attributes, primary, next
       </header>
 
       <Artwork id="world.dusk-ruins" ratio="2 / 1" priority scrim="bottom" className={styles.hero}>
-        <p className={cx("text-fantasy", styles.greeting)}>{name ? `Welcome back, ${name}` : "Welcome back"}</p>
+        <p className={cx("text-fantasy", styles.greeting)}>{`Welcome back, ${firstName(name)}`}</p>
       </Artwork>
 
       <div className="stack stack--lg">

@@ -10,6 +10,15 @@ import type { QuestCardProps } from "@/components/game/QuestCard";
 
 export const SAMPLE_ATHLETE = { name: "Riccardo" };
 
+export const SAMPLE_BODY = {
+  height_cm: 182,
+  weight_kg: 84.5,
+  body_fat_percentage: 18,
+  waist_cm: 88,
+  chest_cm: 104,
+  hips_cm: 100,
+} as const;
+
 export const SAMPLE_STATS: Record<AttributeKey | "overall", { current: number | null; confidence: number; status: StatStatus }> = {
   overall: { current: 51, confidence: 0.64, status: "provisional" },
   endurance: { current: 52, confidence: 0.68, status: "provisional" },

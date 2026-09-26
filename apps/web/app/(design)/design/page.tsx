@@ -2,8 +2,9 @@ import { ATTRIBUTE_KEYS, ATTRIBUTE_LABELS } from "@ascend/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandMark } from "@/components/shell/BrandMark";
+import { AthleteBodyAvatar } from "@/components/body/AthleteBodyAvatar";
 import { QuestCard } from "@/components/game/QuestCard";
-import { SAMPLE_QUESTS } from "@/features/screens/samples";
+import { SAMPLE_BODY, SAMPLE_QUESTS } from "@/features/screens/samples";
 import { AttributeIcon } from "@/components/ui/AttributeIcon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -80,6 +81,14 @@ export default function DesignGalleryPage() {
         <ProgressBar value={4} max={6} label="Gold" text="4 / 6" tone="gold" size="md" />
         <ProgressBar value={12} max={20} label="Data" text="12 / 20" tone="data" size="md" />
         <ProgressBar value={42} max={100} label="Boss" text="42%" tone="boss" size="md" />
+      </section>
+
+      <section className="stack">
+        <SectionHeader title="Athlete body states" aside="sample" />
+        <AthleteBodyAvatar measurements={{}} />
+        <AthleteBodyAvatar measurements={{ height_cm: 182, waist_cm: 88 }} />
+        <AthleteBodyAvatar measurements={SAMPLE_BODY} />
+        <AthleteBodyAvatar measurements={SAMPLE_BODY} view="target" />
       </section>
 
       <section className="stack">

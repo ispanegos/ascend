@@ -70,7 +70,7 @@ test.describe("authenticated shell", () => {
   test("profile reads the athlete's own row through RLS", async ({ page }) => {
     await page.goto("/profile");
     const account = page.getByRole("region", { name: "Account" });
-    await expect(account).toContainText("E2E Athlete");
+    await expect(account).toContainText("Jordan Blake");
     await expect(account).toContainText("@ascend.test");
     await expect(account).toContainText("Metric");
   });

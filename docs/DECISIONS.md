@@ -747,7 +747,7 @@ and the calibration audit, and will be reviewed against real athlete data.
 
 ## ADR-037 — Design System V2 supersedes the cream/minimal visual system
 
-**Status:** Proposed · Design System V2 · awaiting visual approval
+**Status:** Accepted · Design System V2
 
 **Context.** The Milestone 1–3 look (spec §27–§29: warm cream surfaces, deep
 green brand, Inter, "cinematic through type, not decoration") was
@@ -782,7 +782,7 @@ originals for decoration and fills.
 
 ## ADR-038 — Design System V2, pass 2: depth, detail, and confirmed choices
 
-**Status:** Proposed · awaiting visual approval
+**Status:** Accepted
 
 **Confirmed by product.** Whole numbers in the main UI (engine keeps
 decimals; diagnostic views may show more when useful). No Recovery violet —
@@ -802,4 +802,21 @@ compositions shared by product routes and review samples, and a
 **Consequences.** Placeholder art remains placeholder. Review routes need
 `ASCEND_DESIGN_GALLERY=1` outside development and are the only pages that
 may be framed (same origin).
+
+---
+
+## ADR-039 — Close Design System V2; defer the Artwork Pass; body avatar as UI only
+
+**Status:** Accepted
+
+**Decision.** The V2 direction is approved and closed after a final polish:
+first-name greetings from the profile (fallback "Athlete"; Spawn is never an
+identity), a quieter Confidence under Current, and an ATHLETE BODY section on
+You built on `AthleteBodyAvatar` — a neutral, faceless, monochrome mannequin
+with no-data / partial / estimated states and current / start / target views.
+
+**Deferred.** (1) The Artwork Pass: all art stays placeholder and is not a
+release blocker; slots, ids and ratios are fixed (DESIGN_SYSTEM_V2.md §15).
+(2) Morphology: the figure does not change with measurements yet; no
+transformation algorithm exists and none is faked.
 

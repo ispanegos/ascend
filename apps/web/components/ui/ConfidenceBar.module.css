@@ -23,3 +23,8 @@
 .unranked .on {
   background: var(--status-unranked);
 }
+
+/* Subordinate to the score it qualifies. */
+.bar {
+  opacity: 0.8;
+}

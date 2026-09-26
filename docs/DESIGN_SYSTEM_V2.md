@@ -1,6 +1,6 @@
 # ASCEND Design System V2
 
-> Status: **pass 2 implemented, awaiting visual approval** · branch `design-system-v2` ·
+> Status: **closed — direction approved, final polish applied** · branch `design-system-v2` ·
 > supersedes the cream/minimal system of spec §27–§29 (ADR-037).
 > Primary reference: [`docs/design/reference-v2.png`](design/reference-v2.png).
 > Screens: [`docs/design/screens-v2/`](design/screens-v2/) (390 and 320 px, real routes) ·
@@ -282,3 +282,61 @@ breathing, New Peak pulse. `prefers-reduced-motion` stops them all.
 - Three font families, subset to Latin, self-hosted.
 - No animated backgrounds; the only infinite animations are small and
   disabled under reduced motion.
+
+## 13. Athlete body — `AthleteBodyAvatar` (UI architecture only)
+
+`components/body/AthleteBodyAvatar.tsx`, shown near the top of **You**.
+
+- A neutral, faceless, monochrome anatomical mannequin (vector, not pixel
+  art) standing for the athlete's **estimated** real morphology. Not a
+  photo, not a cartoon, not a fantasy hero, not a customisable RPG avatar.
+- Inputs (`BodyMeasurements`, all optional): `height_cm`, `weight_kg`,
+  `body_fat_percentage`, `waist_cm`, `chest_cm`, `hips_cm`, `arm_cm`,
+  `thigh_cm`. You passes the athlete's real profile values.
+- Data states, derived only from which inputs exist: **no-data** (dimmed
+  figure, "Add measurements"), **partial** ("Estimated · partial data"),
+  **estimated** (height, weight and body fat present).
+- Views: `current` (the only one used in product), `start`, `target`
+  (dashed outline — "Target preview"; sample/gallery only).
+- Measured circumferences and height are marked on the figure (a mark says
+  "this input exists"); values are listed beside it.
+- **No morphology is calculated.** The figure is a static placeholder that
+  does not change shape with the inputs, and the UI says so: "An estimate of
+  your shape, not a body scan. The figure will follow your measurements in a
+  later release." Shaping it from the inputs is a future milestone.
+
+## 14. Identity rules
+
+- Names come from the authenticated profile. Today greets by first name
+  ("Welcome back, Alex"); with no name, "Welcome back, Athlete".
+- Spawn is a progression state, never an identity. Test fixtures use
+  realistic names; "Riccardo" appears only in `features/screens/samples.ts`.
+- Compact abbreviations (END STR POW COR MOB AGI REC) only on the Today strip;
+  full attribute names wherever space allows (links keep the full name as
+  their accessible name).
+- Unranked is always "—" + "Unranked", never 0. Current is the main number;
+  Confidence is smaller, muted and explains certainty.
+
+## 15. Artwork Pass — deferred
+
+Artwork quality is **intentionally not a release blocker** for the current
+development phase. Polishing procedural placeholders stops here.
+
+A dedicated **Artwork Pass** will replace every file under
+`apps/web/public/art/` (and optionally the pixel icon set) with final art:
+
+| Slot (id) | Current | Needed |
+|---|---|---|
+| `world.dusk-ruins` | procedural placeholder | Today hero, 2:1, room for a greeting at the bottom |
+| `world.spawn-origin` | procedural placeholder | Spawn / calibration origin scene |
+| `paths.ascend-map` | SVG-authored placeholder | Full path world, 195:440, trail must follow `lib/ascend-route.ts` |
+| `bosses.guardian-dormant` | SVG-authored placeholder | Boss portrait, 195:220, subject in the upper half |
+| `quests.*` (5) | SVG-authored placeholders | Quest scenes, 3:2, subject on the right |
+| `states.*` (2) | procedural placeholders | Locked / empty vignettes, 3:1 |
+| Athlete body | static vector mannequin | Morphology-driven figure (separate milestone) |
+
+Rules for the pass: same ids, same aspect ratios, native pixel size (or
+higher-resolution art with the `image-rendering` choice revisited), no
+changes to components, no copyrighted or stock art, mountains never the
+identity.
+
