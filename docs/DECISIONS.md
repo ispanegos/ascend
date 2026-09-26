@@ -907,6 +907,16 @@ real numbers.
    Path configuration.
 6. Suggestions never exceed three and never change any Stat.
 
+**Scope of this heuristic.** `paths-0.1` — suggest the lowest sufficiently
+confident measured attribute relative to the athlete's profile median — is a
+*provisional v0.1 heuristic*, chosen because Stats are the only context
+ASCEND currently has. It is **not** the long-term philosophy of ASCEND. A Path
+is the athlete's chosen direction, not necessarily a weakness to fix. Future
+milestones may improve suggestions with explicit athlete goals, Boss
+requirements, training history and other approved context, under a new rules
+version. Whatever the rules, suggestions stay advisory and the athlete always
+keeps final control over Path selection.
+
 ---
 
 ## ADR-042 — Stat history and a conservative, deterministic trend

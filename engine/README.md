@@ -23,7 +23,7 @@ RAW EVIDENCE → evidence/parsing → assessment/features → scoring/normalizat
 | `progression/` | Provisional/verified Peak, conservative updates with caps, decay |
 | `audit.py` | Generates `docs/CALIBRATION_AUDIT_v0.1.md` from the config |
 | `engine.py` | Pipeline + calculation trace |
-| `paths/` | Advisory Path suggestions `paths-0.1` (ADR-041), isolated from scoring |
+| `paths/` | Advisory Path suggestions `paths-0.1` (ADR-041), isolated from scoring. A provisional v0.1 heuristic, not ASCEND's long-term philosophy: Paths are the athlete's chosen direction |
 
 The v0.1 curves are **internal calibration**, not population norms,
 percentiles, rankings or medical thresholds.
