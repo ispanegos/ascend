@@ -354,3 +354,12 @@ visual work (see §13 and §15): Today hero, Spawn origin, Ascend map, Boss
 guardian, Quest scenes and empty/locked illustrations (the Artwork Pass), and
 adaptive `AthleteBodyAvatar` morphology.
 
+### Functional additions after the freeze (Milestone 4)
+
+Added only because M4 requirements could not be represented otherwise, in the
+existing V2 vocabulary (§16): `HistoryChart` (custom accessible SVG — cyan
+Current line, gold dashed verified Peak, a data table fallback, no animation),
+`TrendBadge` (arrow + word; silent when history is insufficient), and
+`MobileActionBar aboveNav` (keeps a sticky action clear of the bottom
+navigation — a layout fix).
+

@@ -206,7 +206,7 @@ scoring, Spawn or database behaviour changes.
 - Screenshots: `docs/design/screens-v2/390`, `/320`; review composite `docs/design/review-v2/composite.png`
 - Pass 2 (ADR-038) and final polish (ADR-039): depth, detailed icons, screen compositions, `/design/review`, Athlete body on You. Artwork Pass deferred.
 
-## Milestone 4 — Athlete dashboard · `IN PROGRESS`
+## Milestone 4 — Athlete dashboard · `DONE (local)`
 
 Branch `m4-athlete-dashboard` from **`333da7f`** (M3 + M3.1 + Design System
 V2 + freeze). Scope and decisions: ADR-040 to ADR-043.
@@ -219,6 +219,19 @@ V2 + freeze). Scope and decisions: ADR-040 to ADR-043.
 | 4 | Server | Runner `suggestPaths()`, Path data + server action, Stat/Overall history queries |
 | 5 | UI | `/ascend/paths` (suggestions, selection, history), Today, Ascend, Stats (Peak + trend), Stat detail (Path priority, SVG history chart 7D/28D/3M/1Y) — frozen V2 components |
 | 6 | Tests | E2E: select, change, clear, history, invalid combos rejected; existing suites green |
+
+### Acceptance
+
+- [x] 1 PRIMARY + up to 2 SECONDARY; Unranked selectable, never ranked by it
+- [x] Invalid combinations rejected by the database (constraints, deferred trigger, `set_athlete_paths`)
+- [x] Configuration persists; every change is an append-only revision; history reconstructable
+- [x] RLS: athletes read only their own Paths; no direct client writes
+- [x] Engine suggestions (`paths-0.1`) are advisory, reasoned, and never change Stats
+- [x] Stats show Current, Peak and Confidence; Stat detail plots real snapshots with 7D / 28D / 3M / 1Y
+- [x] Sparse history says "Not enough history yet"; no chart fabricates a point (`trend-0.1`)
+- [x] Today and Ascend reflect real Paths; no Quests, Readiness or Verify workflow invented
+- [x] Design System V2 unchanged except functional additions (history chart, trend badge, action bar above nav)
+- [x] pgTAP, pytest, Vitest, Playwright, typecheck, lint and build green
 
 ## Milestone 5 — Quest + Workout · `NOT STARTED`
 
