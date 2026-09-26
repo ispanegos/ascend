@@ -347,6 +347,85 @@ export type Database = {
           },
         ]
       }
+      athlete_path_configuration_items: {
+        Row: {
+          athlete_id: string
+          configuration_id: string
+          path_key: string
+          priority: string
+        }
+        Insert: {
+          athlete_id: string
+          configuration_id: string
+          path_key: string
+          priority: string
+        }
+        Update: {
+          athlete_id?: string
+          configuration_id?: string
+          path_key?: string
+          priority?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_path_configuration_ite_configuration_id_athlete_id_fkey"
+            columns: ["configuration_id", "athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_path_configurations"
+            referencedColumns: ["id", "athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_path_configuration_ite_configuration_id_athlete_id_fkey"
+            columns: ["configuration_id", "athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_path_history"
+            referencedColumns: ["configuration_id", "athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_path_configuration_ite_configuration_id_athlete_id_fkey"
+            columns: ["configuration_id", "athlete_id"]
+            isOneToOne: false
+            referencedRelation: "current_athlete_paths"
+            referencedColumns: ["configuration_id", "athlete_id"]
+          },
+          {
+            foreignKeyName: "athlete_path_configuration_items_path_key_fkey"
+            columns: ["path_key"]
+            isOneToOne: false
+            referencedRelation: "paths"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      athlete_path_configurations: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          id: string
+          revision: number
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          id?: string
+          revision: number
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          id?: string
+          revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_path_configurations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_settings: {
         Row: {
           athlete_id: string
@@ -732,6 +811,24 @@ export type Database = {
           },
         ]
       }
+      paths: {
+        Row: {
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          key: string
+          label: string
+          sort_order: number
+        }
+        Update: {
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       performance_evidence: {
         Row: {
           assessment_result_id: string | null
@@ -1030,7 +1127,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      athlete_path_history: {
+        Row: {
+          athlete_id: string | null
+          configuration_id: string | null
+          paths: Json | null
+          revision: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_path_configurations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      current_athlete_paths: {
+        Row: {
+          active_since: string | null
+          athlete_id: string | null
+          configuration_id: string | null
+          path_key: string | null
+          priority: string | null
+          revision: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_path_configuration_items_path_key_fkey"
+            columns: ["path_key"]
+            isOneToOne: false
+            referencedRelation: "paths"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "athlete_path_configurations_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       dev_reset_spawn: { Args: { keep_context?: boolean }; Returns: undefined }
@@ -1041,6 +1182,10 @@ export type Database = {
           p_reason: string
           p_result: Json
         }
+        Returns: string
+      }
+      set_athlete_paths: {
+        Args: { p_primary: string; p_secondary?: string[] }
         Returns: string
       }
       spawn_state_rank: { Args: { state: string }; Returns: number }
