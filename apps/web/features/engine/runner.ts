@@ -3,14 +3,14 @@ import "server-only";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import type { EngineInput, EngineOutput } from "./types";
+import type { EngineInput, EngineOutput, PathSuggestionInput, PathSuggestionOutput } from "./types";
 
 /**
  * Runs the Python ASCEND Engine (spec §45). The engine is pure: evidence in,
  * Stats out; it never touches the database.
  *
  * - ASCEND_ENGINE_URL set → POST to a hosted engine (`python -m ascend_engine serve`).
- * - otherwise → a local subprocess, `python3 -m ascend_engine calculate`.
+ * - otherwise → a local subprocess, `python3 -m ascend_engine <command>`.
  */
 
 const TIMEOUT_MS = 15_000;
@@ -55,21 +55,28 @@ function runSubprocess(args: string[], stdin: string): Promise<string> {
   });
 }
 
-export async function runEngine(input: EngineInput): Promise<EngineOutput> {
-  const body = JSON.stringify(input);
+/** One engine call: HTTP when ASCEND_ENGINE_URL is set, otherwise a subprocess. */
+async function call(command: "calculate" | "suggest-paths", payload: unknown): Promise<string> {
+  const body = JSON.stringify(payload);
   const url = process.env.ASCEND_ENGINE_URL;
-  const text = url
-    ? await fetch(`${url.replace(/\/$/, "")}/v1/calculate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }).then(async (response) => {
-        if (!response.ok) throw new EngineError(`Engine returned ${response.status}`);
-        return response.text();
-      })
-    : await runSubprocess(["calculate"], body);
-  return JSON.parse(text) as EngineOutput;
+  if (!url) return runSubprocess([command], body);
+  const response = await fetch(`${url.replace(/\/$/, "")}/v1/${command}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!response.ok) throw new EngineError(`Engine returned ${response.status}`);
+  return response.text();
+}
+
+export async function runEngine(input: EngineInput): Promise<EngineOutput> {
+  return JSON.parse(await call("calculate", input)) as EngineOutput;
+}
+
+/** Advisory Path suggestions (ADR-041). Never persisted, never applied. */
+export async function suggestPaths(input: PathSuggestionInput): Promise<PathSuggestionOutput> {
+  return JSON.parse(await call("suggest-paths", input)) as PathSuggestionOutput;
 }
 
 export interface EngineRegistration {

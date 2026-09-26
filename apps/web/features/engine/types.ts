@@ -56,3 +56,21 @@ export interface EngineOutput {
   gaps: Array<{ test_key: string; status: string; reason_code: string | null }>;
   evidence_ids: string[];
 }
+
+/** Input to `suggest-paths` (ADR-041): only what ASCEND knows. */
+export interface PathSuggestionInput {
+  stats: Record<string, { current: number | null; confidence: number; status: StatStatusWire }>;
+}
+
+export interface PathSuggestion {
+  attribute: string;
+  priority: "primary" | "secondary";
+  reason: string;
+  basis: { current: number | null; confidence: number; profile_median: number | null; gap: number | null };
+}
+
+export interface PathSuggestionOutput {
+  rules_version: string;
+  suggestions: PathSuggestion[];
+  notes: string[];
+}
