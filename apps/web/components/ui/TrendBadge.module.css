@@ -1,0 +1,28 @@
+.trend,
+.insufficient {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.improving {
+  color: var(--accent-success);
+}
+
+.stable {
+  color: var(--text-secondary);
+}
+
+.declining {
+  color: var(--accent-warning);
+}
+
+.insufficient {
+  color: var(--text-muted);
+}

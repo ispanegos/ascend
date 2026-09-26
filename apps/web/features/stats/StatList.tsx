@@ -5,6 +5,8 @@ import { ConfidenceBar } from "@/components/ui/ConfidenceBar";
 import { Icon } from "@/components/ui/Icon";
 import { PixelIcon } from "@/components/ui/PixelIcon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TrendBadge } from "@/components/ui/TrendBadge";
+import type { Trend } from "@ascend/shared";
 import { cx } from "@/lib/cx";
 import { displayPercent, displayStat } from "./trace";
 import styles from "./stats.module.css";
@@ -13,6 +15,8 @@ interface StatLine {
   current: number | null;
   confidence: number;
   status: StatStatus;
+  /** Verified Peak; null until the Stat has been verified. */
+  verifiedPeak?: number | null;
 }
 
 /** What the list needs; `AthleteStats` from the database satisfies it. */
@@ -26,7 +30,16 @@ export interface StatListData {
  * values in cyan, status in words and runes, no scenery behind numbers.
  * Integers only — stored values keep their decimals (spec §3).
  */
-export function StatList({ stats, headingLevel = 2 }: { stats: StatListData; headingLevel?: 1 | 2 }) {
+export function StatList({
+  stats,
+  trends,
+  headingLevel = 2,
+}: {
+  stats: StatListData;
+  /** 28-day trend per attribute (ADR-042); shown only when history allows. */
+  trends?: Partial<Record<AttributeKey, Trend>>;
+  headingLevel?: 1 | 2;
+}) {
   const { overall } = stats;
   const Heading = headingLevel === 1 ? "h1" : "h2";
   const overallValue = overall.current === null ? 0 : Math.min(100, Math.max(0, overall.current));
@@ -85,9 +98,15 @@ export function StatList({ stats, headingLevel = 2 }: { stats: StatListData; hea
                     </>
                   ) : (
                     <>
-                      <ConfidenceBar value={stat.confidence} status={stat.status} />
-                      Confidence {displayPercent(stat.confidence)}
-                      {stat.status === "verified" ? " · Verified" : ""}
+                      <span className={styles.rowConfidence}>
+                        <ConfidenceBar value={stat.confidence} status={stat.status} />
+                        Confidence {displayPercent(stat.confidence)}
+                        {stat.status === "verified" ? " · Verified" : ""}
+                      </span>
+                      <span className={styles.rowPeak}>
+                        Peak {displayStat(stat.verifiedPeak ?? null)}
+                        {trends?.[key] ? <TrendBadge trend={trends[key]} /> : null}
+                      </span>
                     </>
                   )}
                 </span>

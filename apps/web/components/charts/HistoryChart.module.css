@@ -1,0 +1,106 @@
+/* History chart: calm, athletic, readable at ~350 px. No animation. */
+
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--border-default);
+  stroke-width: 1;
+}
+
+.tick {
+  fill: var(--text-muted);
+  font-family: var(--font-product-condensed);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.current {
+  fill: none;
+  stroke: var(--accent-data);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.dot {
+  fill: var(--bg-deep);
+  stroke: var(--accent-data);
+  stroke-width: 2;
+}
+
+.last {
+  fill: var(--accent-data);
+}
+
+.peak {
+  fill: none;
+  stroke: var(--status-peak);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-meta-size);
+}
+
+.keyCurrent::before,
+.keyPeak::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px solid var(--accent-data);
+}
+
+.keyPeak::before {
+  border-top: 2px dashed var(--status-peak);
+}
+
+.data summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  color: var(--accent-primary);
+  font-family: var(--font-product-condensed);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.data table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-small-size);
+}
+
+.data th {
+  color: var(--text-secondary);
+  font-family: var(--font-product-condensed);
+  font-size: var(--text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.data th,
+.data td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}

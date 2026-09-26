@@ -1,7 +1,18 @@
-import { ATTRIBUTE_LABELS, isAttributeKey, testName } from "@ascend/shared";
+import {
+  ATTRIBUTE_LABELS,
+  HISTORY_WINDOWS,
+  HISTORY_WINDOW_LABELS,
+  isAttributeKey,
+  isHistoryWindow,
+  pointsInWindow,
+  statTrend,
+  testName,
+  type HistoryWindow,
+} from "@ascend/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { HistoryChart } from "@/components/charts/HistoryChart";
 import { Icon } from "@/components/ui/Icon";
 import { AttributeIcon } from "@/components/ui/AttributeIcon";
 import { ConfidenceBar } from "@/components/ui/ConfidenceBar";
@@ -10,8 +21,11 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EmptyState } from "@/components/ui/States";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TrendBadge } from "@/components/ui/TrendBadge";
+import { getCurrentPaths } from "@/features/paths/data";
 import { requireInitializedAthlete } from "@/features/spawn/guard";
 import { getStatDetail } from "@/features/stats/data";
+import { getStatHistories } from "@/features/stats/history";
 import styles from "@/features/stats/stats.module.css";
 import {
   displayPercent,
@@ -47,11 +61,27 @@ function formatDate(iso: string): string {
  * Stat detail (spec §63, V2 §18): Current, Peak, Confidence, status, why this
  * score, evidence. A data screen — runes and type, no scenery.
  */
-export default async function StatDetailPage({ params }: { params: Promise<{ attribute: string }> }) {
-  const { attribute } = await params;
+export default async function StatDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ attribute: string }>;
+  searchParams: Promise<{ window?: string }>;
+}) {
+  const [{ attribute }, query] = await Promise.all([params, searchParams]);
   if (!isAttributeKey(attribute)) notFound();
+  const window: HistoryWindow = isHistoryWindow(query.window) ? query.window : "28d";
   const user = await requireInitializedAthlete();
-  const detail = await getStatDetail(user.id, attribute);
+  const now = new Date();
+  const [detail, histories, paths] = await Promise.all([
+    getStatDetail(user.id, attribute),
+    getStatHistories(user.id, now),
+    getCurrentPaths(user.id),
+  ]);
+  const history = histories[attribute] ?? [];
+  const inWindow = pointsInWindow(history, window, now);
+  const trend = statTrend(history, window, now);
+  const pathPriority = paths.primary === attribute ? "Primary" : paths.secondary.includes(attribute) ? "Secondary" : null;
   const label = ATTRIBUTE_LABELS[attribute];
 
   if (!detail) {
@@ -84,6 +114,11 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
           <AttributeIcon attribute={attribute} size={32} muted={unranked} />
           <h1>{label}</h1>
         </span>
+        {pathPriority ? (
+          <Link href="/ascend/paths" className={styles.pathChip}>
+            {pathPriority} Path
+          </Link>
+        ) : null}
       </header>
 
       <div className="stack stack--lg">
@@ -134,6 +169,38 @@ export default async function StatDetailPage({ params }: { params: Promise<{ att
             </span>
           </p>
         ) : null}
+
+        <section className={styles.section} aria-labelledby="history-heading">
+          <SectionHeader
+            id="history-heading"
+            title="History"
+            aside={<TrendBadge trend={trend} showInsufficient />}
+          />
+          <nav className={styles.windows} aria-label="History period">
+            {(Object.keys(HISTORY_WINDOWS) as HistoryWindow[]).map((w) => (
+              <Link
+                key={w}
+                href={`/stats/${attribute}?window=${w}`}
+                className={styles.window}
+                aria-current={w === window ? "true" : undefined}
+                scroll={false}
+              >
+                {HISTORY_WINDOW_LABELS[w]}
+              </Link>
+            ))}
+          </nav>
+          {unranked ? (
+            <p className={styles.note}>No history: {label} is unranked. Nothing is plotted until evidence ranks it.</p>
+          ) : (
+            <HistoryChart label={label} points={inWindow} window={window} now={now} />
+          )}
+          {trend.state === "insufficient_history" && !unranked ? (
+            <p className={styles.note}>
+              A trend needs at least three results on different days. One snapshot — like the Spawn baseline — is a
+              starting point, not a trend.
+            </p>
+          ) : null}
+        </section>
 
         <section className={styles.section} aria-labelledby="why-heading">
           <SectionHeader id="why-heading" title="Why this score?" aside={unranked ? undefined : displayStat(stat.current)} />

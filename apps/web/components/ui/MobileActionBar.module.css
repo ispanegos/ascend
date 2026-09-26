@@ -11,6 +11,11 @@
   background: linear-gradient(to top, var(--bg-app) 70%, color-mix(in srgb, var(--bg-app) 0%, transparent));
 }
 
+.aboveNav {
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: var(--space-3);
+}
+
 @media (min-width: 768px) {
   .bar {
     margin-inline: calc(var(--desktop-gutter) * -1);

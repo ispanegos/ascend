@@ -18,14 +18,22 @@ export interface StatSummary {
   status: StatStatus;
 }
 
+export interface PathLine extends StatSummary {
+  attribute: AttributeKey;
+}
+
 export interface TodayScreenProps {
   name: string | null;
   dayLabel: ReactNode;
   overall: StatSummary | null;
   attributes: Record<AttributeKey, StatSummary> | null;
-  /** Today's primary activity: a Quest once they exist, otherwise the current objective. */
+  /**
+   * Today's primary area: a Quest (M5+), the athlete's Paths once chosen, or
+   * the current objective (choose Paths).
+   */
   primary:
     | { kind: "quest"; quest: QuestCardProps }
+    | { kind: "paths"; primary: PathLine; secondary: readonly PathLine[] }
     | { kind: "objective"; title: string; text: string; href: string; cta: string };
   next: { title: string; text: string };
 }
@@ -88,9 +96,36 @@ export function TodayScreen({ name, dayLabel, overall, attributes, primary, next
         ) : null}
 
         <section aria-labelledby="activity-heading">
-          <SectionHeader id="activity-heading" title={primary.kind === "quest" ? "Today's Quest" : "Current objective"} />
+          <SectionHeader
+            id="activity-heading"
+            title={primary.kind === "quest" ? "Today's Quest" : primary.kind === "paths" ? "Your direction" : "Current objective"}
+          />
           {primary.kind === "quest" ? (
             <QuestCard {...primary.quest} />
+          ) : primary.kind === "paths" ? (
+            <div className={styles.paths}>
+              <ul className={styles.pathList}>
+                {[primary.primary, ...primary.secondary].map((line, index) => (
+                  <li key={line.attribute} className={cx(styles.pathLine, index === 0 && styles.pathPrimary)}>
+                    <AttributeIcon attribute={line.attribute} size={24} muted={line.current === null} />
+                    <span className={styles.pathName}>
+                      {ATTRIBUTE_LABELS[line.attribute]}
+                      <span className={styles.pathPriority}>{index === 0 ? "Primary" : "Secondary"}</span>
+                    </span>
+                    <span className={cx("stat-number", styles.pathValue, line.current === null && styles.unranked)}>
+                      {round(line.current)}
+                    </span>
+                    <StatusBadge status={line.status} size="sm" />
+                  </li>
+                ))}
+              </ul>
+              <p className={styles.objectiveBody}>
+                Training generation is the next stage: ASCEND will build your Quests from these Paths.
+              </p>
+              <ButtonLink href="/ascend/paths" variant="secondary">
+                Review your paths
+              </ButtonLink>
+            </div>
           ) : (
             <div className={styles.objective}>
               <span className={styles.objectiveScene} aria-hidden="true">

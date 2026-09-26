@@ -224,3 +224,62 @@
   font-size: 1.125rem;
   font-weight: 600;
 }
+
+/* Your direction: the chosen Paths with real Stats. */
+.paths {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow);
+}
+
+.pathList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pathLine {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+}
+
+.pathPrimary {
+  border: 1px solid var(--border-highlight);
+  background: linear-gradient(180deg, rgba(58, 39, 16, 0.55), rgba(7, 20, 27, 0.95));
+  box-shadow: var(--glow-primary);
+}
+
+.pathName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--font-product-condensed);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.pathPriority {
+  color: var(--accent-primary);
+  font-size: var(--text-micro-size);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pathValue {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--accent-data);
+}

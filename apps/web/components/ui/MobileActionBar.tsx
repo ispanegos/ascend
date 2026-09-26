@@ -6,6 +6,6 @@ import styles from "./MobileActionBar.module.css";
  * primary CTA in the thumb zone. Because it is `position: sticky` inside the
  * document flow, it reserves its own space and never covers content.
  */
-export function MobileActionBar({ children }: { children: ReactNode }) {
-  return <div className={styles.bar}>{children}</div>;
+export function MobileActionBar({ children, aboveNav = false }: { children: ReactNode; aboveNav?: boolean }) {
+  return <div className={aboveNav ? `${styles.bar} ${styles.aboveNav}` : styles.bar}>{children}</div>;
 }
