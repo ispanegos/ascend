@@ -321,7 +321,7 @@ test.describe("Spawn journey", () => {
     await expect(statList.getByRole("link", { name: /^Power\s*—\s*Unranked/ })).toBeVisible();
     for (const name of ["Endurance", "Strength", "Core", "Mobility", "Agility"]) {
       // Rounded integer + real (capped) Confidence; never a decimal, never verified by Spawn alone.
-      const row = statList.getByRole("link", { name: new RegExp(`^${name}\\s*\\d{1,3}\\s*Confidence \\d{1,2}%$`) });
+      const row = statList.getByRole("link", { name: new RegExp(`^${name}\\s*\\d{1,3}\\s*Confidence \\d{1,2}%\\s*Peak —$`) });
       await expect(row).toBeVisible();
       const percent = Number((await row.textContent())?.match(/Confidence (\d+)%/)?.[1]);
       expect(percent).toBeLessThanOrEqual(69);
@@ -341,6 +341,12 @@ test.describe("Spawn journey", () => {
     await expect(page.getByText("Not verified yet", { exact: true })).toBeVisible();
     await expect(page.getByText(/can become verified after an independent result on a later day/)).toBeVisible();
     await expect(page.getByText("Pace distance")).toBeVisible();
+    // History: one Spawn snapshot is a starting point, never a trend (ADR-042).
+    await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
+    await expect(page.getByText("Not enough history yet", { exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "7D", exact: true }).click();
+    await expect(page).toHaveURL(/window=7d$/);
+    await expect(page.getByRole("link", { name: "7D", exact: true })).toHaveAttribute("aria-current", "true");
     await expect(page.getByRole("listitem").filter({ hasText: "Spawn · E04" })).toContainText("20-Minute Run/Walk");
     await expectNoHorizontalOverflow(page);
     await shot(page, "09-stat-detail");
@@ -349,6 +355,15 @@ test.describe("Spawn journey", () => {
     // The shell is unlocked; root resumes at Today.
     await page.goto("/");
     await expect(page).toHaveURL(/\/today$/);
+
+    // Path suggestions come from the engine, with reasons, and are advisory (ADR-041).
+    await page.goto("/ascend/paths");
+    const suggestions = page.getByRole("region", { name: "ASCEND suggests" });
+    await expect(suggestions).toBeVisible();
+    await expect(suggestions).toContainText(/below the middle of your profile|close together/);
+    await expect(suggestions).toContainText("primary");
+    await expect(page.getByText("0 / 3")).toBeVisible(); // nothing is chosen automatically
+    await page.goto("/today");
     if (SHOTS) {
       await shot(page, "10-today");
       await shot(page, "10b-today-full", { fullPage: true });

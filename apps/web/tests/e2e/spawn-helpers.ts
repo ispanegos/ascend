@@ -151,7 +151,11 @@ export async function confirm(page: Page, pain: "No" | "Yes" = "No", location?: 
 export async function skipRemaining(page: Page, count: number) {
   for (let i = 0; i < count; i += 1) {
     const heading = await page.getByRole("heading", { level: 1 }).textContent();
-    await press(page, "I can't do this test");
+    // Under load the button can be clicked before hydration; retry until the sheet is really open.
+    await expect(async () => {
+      await press(page, "I can't do this test");
+      await expect(page.getByRole("dialog")).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("radio", { name: "Missing equipment" }).check();
     await dialog.getByRole("button", { name: "Skip for now" }).click();
