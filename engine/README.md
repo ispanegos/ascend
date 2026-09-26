@@ -23,6 +23,7 @@ RAW EVIDENCE → evidence/parsing → assessment/features → scoring/normalizat
 | `progression/` | Provisional/verified Peak, conservative updates with caps, decay |
 | `audit.py` | Generates `docs/CALIBRATION_AUDIT_v0.1.md` from the config |
 | `engine.py` | Pipeline + calculation trace |
+| `paths/` | Advisory Path suggestions `paths-0.1` (ADR-041), isolated from scoring |
 
 The v0.1 curves are **internal calibration**, not population norms,
 percentiles, rankings or medical thresholds.
@@ -34,7 +35,8 @@ python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"   # dev only: pytest
 .venv/bin/python -m pytest                                 # unit + integration tests
 .venv/bin/python -m ascend_engine validate-config
 .venv/bin/python -m ascend_engine calculate < input.json      # JSON in → JSON out
-.venv/bin/python -m ascend_engine serve --port 8765           # POST /v1/calculate
+.venv/bin/python -m ascend_engine serve --port 8765           # POST /v1/calculate, /v1/suggest-paths
+.venv/bin/python -m ascend_engine suggest-paths < stats.json   # advisory Path suggestions
 .venv/bin/python -m fixtures.report                           # synthetic athletes A–L
 .venv/bin/python -m ascend_engine audit > ../docs/CALIBRATION_AUDIT_v0.1.md
 ```

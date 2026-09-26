@@ -901,8 +901,10 @@ real numbers.
    the profile is balanced and it is lowest by a small margin.
 4. SECONDARY (at most one from this rule): the next-lowest comparable
    attribute, only if it is at least 5 points below the middle.
-5. SECONDARY (at most one): the first Unranked attribute, with the reason
-   that ASCEND has no evidence for it yet and that choosing it does not rank it.
+5. SECONDARY (at most one), only alongside a PRIMARY: the first Unranked
+   attribute, with the reason that ASCEND has no evidence for it yet and that
+   choosing it does not rank it. Suggestions therefore always form a valid
+   Path configuration.
 6. Suggestions never exceed three and never change any Stat.
 
 ---

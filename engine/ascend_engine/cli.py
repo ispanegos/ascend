@@ -5,6 +5,7 @@
   python -m ascend_engine config [version]        # the parsed configuration as JSON
   python -m ascend_engine serve [--port 8765]     # HTTP, for hosting later
   python -m ascend_engine audit                   # calibration audit (markdown)
+  python -m ascend_engine suggest-paths < stats.json  # advisory Path suggestions (ADR-041)
 
 Exit codes: 0 success, 2 invalid input, 3 invalid configuration.
 """
@@ -17,6 +18,7 @@ import sys
 from .config import ConfigError, load_config
 from .engine import calculate
 from .evidence.parsing import EvidenceError
+from .paths import PathInputError
 from .version import ASCEND_ENGINE_VERSION
 
 
@@ -45,6 +47,11 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"ok {config.engine_version} {config.config_hash}")
             return 0
+        if command == "suggest-paths":
+            from .paths import suggest_paths
+
+            json.dump(suggest_paths(json.load(sys.stdin)), sys.stdout, sort_keys=True, separators=(",", ":"))
+            return 0
         if command == "audit":
             from .audit import main as audit
 
@@ -59,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as error:
         print(json.dumps({"error": "invalid_config", "message": str(error)}), file=sys.stderr)
         return 3
-    except (EvidenceError, json.JSONDecodeError) as error:
+    except (EvidenceError, PathInputError, json.JSONDecodeError) as error:
         print(json.dumps({"error": "invalid_input", "message": str(error)}), file=sys.stderr)
         return 2
     print(f"unknown command {command!r}", file=sys.stderr)
