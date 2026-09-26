@@ -820,3 +820,123 @@ release blocker; slots, ids and ratios are fixed (DESIGN_SYSTEM_V2.md §15).
 (2) Morphology: the figure does not change with measurements yet; no
 transformation algorithm exists and none is faked.
 
+---
+
+## ADR-040 — Paths: catalogue plus append-only configuration history
+
+**Status:** Accepted · Milestone 4 · revises spec §46 `paths` / `athlete_paths`
+
+**Context.** A Path is an attribute the athlete wants prioritised (spec §18),
+not a sport. Product rules for M4: at most three active Paths — exactly one
+PRIMARY, zero to two SECONDARY; MAINTAIN is not in M4; zero Paths is allowed
+while (re)configuring; Unranked attributes may be chosen. Path history must be
+reconstructable: when each Path became active, its priority, priority changes,
+deactivation and reactivation.
+
+**Decision.** A mutable `athlete_paths` table cannot answer "what was active
+on date X" without an audit trail, so the model is a *configuration history*:
+
+- `paths` — the catalogue: seven rows, one per Stat attribute. Read-only.
+- `athlete_path_configurations` — one immutable row per change: `athlete_id`,
+  `revision` (1, 2, 3…; `unique (athlete_id, revision)`), `created_at`.
+  An empty configuration (zero Paths) is a valid row.
+- `athlete_path_configuration_items` — the Paths of a configuration:
+  `path_key`, `priority in ('primary', 'secondary')`, one row per Path.
+
+A configuration is a full snapshot, valid from `created_at` until the next
+revision. The current configuration is the athlete's highest revision
+(`current_athlete_paths` view, index on `(athlete_id, revision desc)`); the
+history view `athlete_path_history` adds `valid_until`. Activation,
+priority change, deactivation and reactivation are the differences between
+consecutive revisions — derived, never stored twice.
+
+**Invariants, enforced in the database** (not only the client):
+- `unique (configuration_id, path_key)` — a Path once per configuration;
+- partial unique index — at most one PRIMARY per configuration;
+- a deferred constraint trigger — ≤ 3 items, ≤ 2 SECONDARY, and exactly one
+  PRIMARY whenever the configuration has any item;
+- both tables are append-only (update/delete refused, dev reset excepted);
+- revision numbers are allocated under a row lock on the athlete's settings,
+  and `unique (athlete_id, revision)` makes a concurrent double write fail
+  rather than interleave.
+
+**Write path.** Clients have no insert/update/delete grants. They call
+`public.set_athlete_paths(p_primary text, p_secondary text[])`
+(security definer, `auth.uid()` only, Spawn must be COMPLETE). It validates,
+skips a no-op identical to the current configuration, and appends one
+revision. RLS limits every read to the athlete's own rows.
+
+**Consequences.** Changing Paths never touches Stats, Peaks, snapshots or
+evidence. There is no cooldown in M4. M5 can read the configuration valid at
+any moment to explain training.
+
+---
+
+## ADR-041 — Path suggestions are an isolated, advisory engine capability
+
+**Status:** Accepted · Milestone 4
+
+**Decision.** `ascend_engine/paths/` (separate from calibration and scoring)
+exposes `suggest_paths(input)`: CLI `python -m ascend_engine suggest-paths`,
+HTTP `POST /v1/suggest-paths`. Rules are versioned (`paths-0.1`), pure and
+deterministic; nothing is persisted and nothing is applied automatically.
+
+**Input** — only what ASCEND knows: for each of the seven attributes, the
+latest `current` (or null = Unranked), `confidence` and `status`. No goals,
+sports or preferences are inferred.
+
+**Output** — `{ rules_version, suggestions: [{ attribute, priority, reason,
+basis }], notes: [...] }`, at most one PRIMARY and two SECONDARY (the same
+shape the Path rules allow), each with a human-readable reason built from
+real numbers.
+
+**Rules (`paths-0.1`).**
+1. *Comparable* attributes are ranked and have Confidence ≥ 0.50. Ranked
+   attributes below that are excluded from comparison and named in a note.
+2. With fewer than three comparable attributes there is no comparison-based
+   suggestion (note: not enough measured attributes to compare).
+3. The median of comparable Currents is the middle of the athlete's profile.
+   PRIMARY: the lowest comparable Current (ties: attribute order). Reason says
+   how far below the middle it is, or — when the gap is under 5 points — that
+   the profile is balanced and it is lowest by a small margin.
+4. SECONDARY (at most one from this rule): the next-lowest comparable
+   attribute, only if it is at least 5 points below the middle.
+5. SECONDARY (at most one): the first Unranked attribute, with the reason
+   that ASCEND has no evidence for it yet and that choosing it does not rank it.
+6. Suggestions never exceed three and never change any Stat.
+
+---
+
+## ADR-042 — Stat history and a conservative, deterministic trend
+
+**Status:** Accepted · Milestone 4
+
+**Decision.** History is read from `stat_snapshots` / `overall_snapshots`
+only. Charts plot the stored points — no interpolation, smoothing or
+synthetic points. Windows: 7D, 28D, 3M, 1Y.
+
+**Trend rule (`trend-0.1`, `packages/shared`):** for one attribute and window,
+1. keep snapshots inside the window with a Current, from the *latest engine
+   version only* (recalibration is not athletic change);
+2. collapse snapshots less than 24 h apart into one observation (the latest),
+   mirroring the engine's independent-observation rule;
+3. INSUFFICIENT_HISTORY unless there are ≥ 3 observations spanning at least
+   max(3 days, a quarter of the window);
+4. otherwise Δ = last − first observation: Δ ≥ +2.0 IMPROVING, Δ ≤ −2.0
+   DECLINING, else STABLE. The window's end point is never compared with a
+   value "exactly N days ago".
+
+A single Spawn snapshot is never a trend. No ML.
+
+---
+
+## ADR-043 — Milestone 4 boundaries
+
+**Status:** Accepted · Milestone 4
+
+In M4: Path selection and history, engine Path suggestions, Stat and Overall
+history with the trend rule, Today and Ascend reflecting real state.
+Not in M4: Quest generation (M5), VERIFY [ATTRIBUTE] / reassessment flows
+(M5), Boss Readiness (M6), MAINTAIN priority, a global activity feed, remote
+migrations and deployment. Screens may say what is next; they never simulate it.
+

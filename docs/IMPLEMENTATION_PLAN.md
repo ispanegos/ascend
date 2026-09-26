@@ -206,10 +206,19 @@ scoring, Spawn or database behaviour changes.
 - Screenshots: `docs/design/screens-v2/390`, `/320`; review composite `docs/design/review-v2/composite.png`
 - Pass 2 (ADR-038) and final polish (ADR-039): depth, detailed icons, screen compositions, `/design/review`, Athlete body on You. Artwork Pass deferred.
 
-## Milestone 4 — Athlete dashboard · `NOT STARTED`
+## Milestone 4 — Athlete dashboard · `IN PROGRESS`
 
-Today (§61), Stats + Stat cards (§35), Stat detail (§63), Paths (§18),
-history.
+Branch `m4-athlete-dashboard` from **`333da7f`** (M3 + M3.1 + Design System
+V2 + freeze). Scope and decisions: ADR-040 to ADR-043.
+
+| # | Step | Output |
+|---|---|---|
+| 1 | Database | Migration: `paths` (7 rows), `athlete_path_configurations`, `athlete_path_configuration_items`, invariants, append-only, RLS, `set_athlete_paths()`, `current_athlete_paths`, `athlete_path_history`; pgTAP |
+| 2 | Engine | `ascend_engine/paths/` suggestion rules `paths-0.1`, CLI `suggest-paths`, `POST /v1/suggest-paths`; pytest |
+| 3 | Domain | `packages/shared`: Path rules (validation mirror), trend rule `trend-0.1`, history windows; Vitest |
+| 4 | Server | Runner `suggestPaths()`, Path data + server action, Stat/Overall history queries |
+| 5 | UI | `/ascend/paths` (suggestions, selection, history), Today, Ascend, Stats (Peak + trend), Stat detail (Path priority, SVG history chart 7D/28D/3M/1Y) — frozen V2 components |
+| 6 | Tests | E2E: select, change, clear, history, invalid combos rejected; existing suites green |
 
 ## Milestone 5 — Quest + Workout · `NOT STARTED`
 
