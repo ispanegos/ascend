@@ -7,3 +7,5 @@ export * from "./spawn/fields";
 export * from "./spawn/progress";
 export * from "./profile/options";
 export * from "./profile/validation";
+export * from "./paths/rules";
+export * from "./history/trend";
